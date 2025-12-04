@@ -119,12 +119,22 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   }
 
   /**
+   * Generates the full branch name with the stresst prefix.
+   */
+  function getFullBranchName(suffix: string): string {
+    if (!selectedBranch) return "";
+    return `stresst-${selectedBranch}-${suffix.trim()}`;
+  }
+
+  /**
    * Creates a new branch from the selected commit.
    */
   async function handleCreateBranch(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedRepo || !selectedCommit || !newBranchName.trim()) return;
+    if (!selectedRepo || !selectedCommit || !selectedBranch || !newBranchName.trim()) return;
 
+    const fullBranchName = getFullBranchName(newBranchName);
+    
     setCreatingBranch(true);
     setError(null);
     setBranchSuccess(null);
@@ -136,7 +146,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
         body: JSON.stringify({
           owner: selectedRepo.owner.login,
           repo: selectedRepo.name,
-          branchName: newBranchName.trim(),
+          branchName: fullBranchName,
           sha: selectedCommit.sha,
         }),
       });
@@ -146,7 +156,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
         throw new Error(data.error || "Failed to create branch");
       }
 
-      setBranchSuccess(newBranchName.trim());
+      setBranchSuccess(fullBranchName);
       setNewBranchName("");
       setShowCreateBranch(false);
       
@@ -471,7 +481,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
             </div>
 
             {/* Create Branch Form */}
-            {showCreateBranch && (
+            {showCreateBranch && selectedBranch && (
               <form onSubmit={handleCreateBranch} className="flex flex-col gap-3 rounded-lg border border-[#30363d] bg-[#161b22] p-4">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-white">Create new branch from this commit</label>
@@ -488,19 +498,24 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                     </svg>
                   </button>
                 </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newBranchName}
-                    onChange={(e) => setNewBranchName(e.target.value)}
-                    placeholder="feature/my-new-branch"
-                    className="flex-1 rounded-lg border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-white placeholder-[#8b949e] focus:border-[#238636] focus:outline-none focus:ring-1 focus:ring-[#238636]"
-                    disabled={creatingBranch}
-                  />
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center rounded-lg border border-[#30363d] bg-[#0d1117]">
+                    <span className="whitespace-nowrap border-r border-[#30363d] bg-[#161b22] px-3 py-2 font-mono text-sm text-[#8b949e]">
+                      stresst-{selectedBranch}-
+                    </span>
+                    <input
+                      type="text"
+                      value={newBranchName}
+                      onChange={(e) => setNewBranchName(e.target.value.replace(/\s/g, "-"))}
+                      placeholder="my-suffix"
+                      className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-white placeholder-[#8b949e] focus:outline-none"
+                      disabled={creatingBranch}
+                    />
+                  </div>
                   <button
                     type="submit"
                     disabled={creatingBranch || !newBranchName.trim()}
-                    className="inline-flex items-center gap-2 rounded-lg bg-[#238636] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2ea043] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex flex-shrink-0 items-center gap-2 rounded-lg bg-[#238636] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2ea043] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {creatingBranch ? (
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -513,7 +528,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                   </button>
                 </div>
                 <p className="text-xs text-[#8b949e]">
-                  Branch will be created from commit <code className="text-[#58a6ff]">{selectedCommit.sha.substring(0, 7)}</code>
+                  Full branch name: <code className="text-[#58a6ff]">{getFullBranchName(newBranchName) || `stresst-${selectedBranch}-...`}</code>
                 </p>
               </form>
             )}
