@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { GitHubRepo, GitHubBranch, GitHubCommit } from "@/lib/github";
+import type { GitHubRepo, GitHubBranch, GitHubCommit, GitHubCommitDetails } from "@/lib/github";
 
 interface RepoBranchSelectorProps {
   repos: GitHubRepo[];
@@ -10,7 +10,7 @@ interface RepoBranchSelectorProps {
 
 /**
  * Split-screen component for selecting a repository, branch, viewing commits,
- * and displaying details for selected commits.
+ * and displaying details for selected commits including changed files.
  * 
  * @param repos - List of user's GitHub repositories
  * @param accessToken - GitHub OAuth access token for fetching data
@@ -19,10 +19,12 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [selectedCommit, setSelectedCommit] = useState<GitHubCommit | null>(null);
+  const [commitDetails, setCommitDetails] = useState<GitHubCommitDetails | null>(null);
   const [branches, setBranches] = useState<GitHubBranch[]>([]);
   const [commits, setCommits] = useState<GitHubCommit[]>([]);
   const [loadingBranches, setLoadingBranches] = useState(false);
   const [loadingCommits, setLoadingCommits] = useState(false);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /**
@@ -32,6 +34,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
     setSelectedRepo(repo);
     setSelectedBranch(null);
     setSelectedCommit(null);
+    setCommitDetails(null);
     setCommits([]);
     setLoadingBranches(true);
     setError(null);
@@ -63,6 +66,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
     
     setSelectedBranch(branchName);
     setSelectedCommit(null);
+    setCommitDetails(null);
     setLoadingCommits(true);
     setError(null);
 
@@ -82,6 +86,35 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
       setCommits([]);
     } finally {
       setLoadingCommits(false);
+    }
+  }
+
+  /**
+   * Fetches details for the selected commit including changed files.
+   */
+  async function handleCommitSelect(commit: GitHubCommit) {
+    if (!selectedRepo) return;
+    
+    setSelectedCommit(commit);
+    setLoadingDetails(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `/api/github/commit?owner=${selectedRepo.owner.login}&repo=${selectedRepo.name}&sha=${commit.sha}`
+      );
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch commit details");
+      }
+      
+      const data = await response.json();
+      setCommitDetails(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+      setCommitDetails(null);
+    } finally {
+      setLoadingDetails(false);
     }
   }
 
@@ -112,6 +145,24 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
       hour: "2-digit",
       minute: "2-digit",
     });
+  }
+
+  /**
+   * Returns the appropriate color classes for a file status.
+   */
+  function getStatusColor(status: string): { bg: string; text: string; label: string } {
+    switch (status) {
+      case "added":
+        return { bg: "bg-[#238636]/20", text: "text-[#3fb950]", label: "A" };
+      case "removed":
+        return { bg: "bg-[#da3633]/20", text: "text-[#f85149]", label: "D" };
+      case "modified":
+        return { bg: "bg-[#9e6a03]/20", text: "text-[#d29922]", label: "M" };
+      case "renamed":
+        return { bg: "bg-[#8b949e]/20", text: "text-[#8b949e]", label: "R" };
+      default:
+        return { bg: "bg-[#8b949e]/20", text: "text-[#8b949e]", label: "?" };
+    }
   }
 
   return (
@@ -231,7 +282,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                 {commits.map((commit) => (
                   <button
                     key={commit.sha}
-                    onClick={() => setSelectedCommit(commit)}
+                    onClick={() => handleCommitSelect(commit)}
                     className={`flex w-full gap-3 border-b border-[#30363d] p-3 text-left transition-colors last:border-b-0 hover:bg-[#21262d] ${
                       selectedCommit?.sha === commit.sha ? "bg-[#238636]/10 hover:bg-[#238636]/15" : ""
                     }`}
@@ -277,10 +328,14 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
         )}
       </div>
 
-      {/* Right Panel - Commit Details */}
-      <div className="flex h-full w-1/2 flex-col p-6">
-        {selectedCommit ? (
-          <div className="flex flex-col gap-6">
+      {/* Right Panel - Commit Details & Files */}
+      <div className="flex h-full w-1/2 flex-col overflow-hidden p-6">
+        {loadingDetails ? (
+          <div className="flex flex-1 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#30363d] border-t-[#238636]" />
+          </div>
+        ) : selectedCommit && commitDetails ? (
+          <div className="flex h-full flex-col gap-6 overflow-hidden">
             {/* Commit Header */}
             <div className="flex items-start gap-4">
               {selectedCommit.author?.avatar_url ? (
@@ -294,7 +349,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                   {selectedCommit.commit.author.name.charAt(0).toUpperCase()}
                 </div>
               )}
-              <div className="flex flex-col gap-1">
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <h2 className="text-lg font-semibold text-white">
                   {selectedCommit.author?.login ?? selectedCommit.commit.author.name}
                 </h2>
@@ -302,53 +357,101 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                   {formatFullDate(selectedCommit.commit.author.date)}
                 </p>
               </div>
-            </div>
-
-            {/* Commit SHA */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-medium uppercase tracking-wide text-[#8b949e]">
-                Commit SHA
-              </label>
-              <div className="flex items-center gap-2">
-                <code className="rounded-md bg-[#161b22] px-3 py-2 font-mono text-sm text-[#58a6ff]">
-                  {selectedCommit.sha}
-                </code>
-              </div>
+              {/* Link to GitHub */}
+              {selectedRepo && (
+                <a
+                  href={`https://github.com/${selectedRepo.full_name}/commit/${selectedCommit.sha}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 rounded-lg border border-[#30363d] bg-[#21262d] p-2 text-[#8b949e] transition-colors hover:bg-[#30363d] hover:text-white"
+                  title="View on GitHub"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              )}
             </div>
 
             {/* Commit Message */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-medium uppercase tracking-wide text-[#8b949e]">
-                Commit Message
-              </label>
-              <div className="rounded-lg border border-[#30363d] bg-[#161b22] p-4">
-                <p className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-white">
-                  {selectedCommit.commit.message}
-                </p>
+              <div className="flex items-center gap-3">
+                <code className="rounded-md bg-[#161b22] px-2 py-1 font-mono text-xs text-[#58a6ff]">
+                  {selectedCommit.sha.substring(0, 7)}
+                </code>
+                {commitDetails.stats && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-[#3fb950]">+{commitDetails.stats.additions}</span>
+                    <span className="text-[#f85149]">-{commitDetails.stats.deletions}</span>
+                  </div>
+                )}
               </div>
+              <p className="text-sm text-white">
+                {selectedCommit.commit.message.split('\n')[0]}
+              </p>
             </div>
 
-            {/* Link to GitHub */}
-            {selectedRepo && (
-              <a
-                href={`https://github.com/${selectedRepo.full_name}/commit/${selectedCommit.sha}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 self-start rounded-lg border border-[#30363d] bg-[#21262d] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#30363d]"
-              >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path
-                    fillRule="evenodd"
-                    d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                    clipRule="evenodd"
-                  />
+            {/* Changed Files */}
+            <div className="flex min-h-0 flex-1 flex-col gap-3">
+              <h3 className="flex items-center gap-2 text-sm font-medium text-[#8b949e]">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                View on GitHub
-                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            )}
+                {commitDetails.files?.length ?? 0} files changed
+              </h3>
+              
+              {commitDetails.files && commitDetails.files.length > 0 ? (
+                <div className="flex-1 overflow-y-auto rounded-lg border border-[#30363d] bg-[#161b22]">
+                  {commitDetails.files.map((file) => {
+                    const statusStyle = getStatusColor(file.status);
+                    return (
+                      <div
+                        key={file.sha + file.filename}
+                        className="flex items-center gap-3 border-b border-[#30363d] px-4 py-3 last:border-b-0 hover:bg-[#21262d]"
+                      >
+                        {/* Status Badge */}
+                        <span
+                          className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-xs font-bold ${statusStyle.bg} ${statusStyle.text}`}
+                        >
+                          {statusStyle.label}
+                        </span>
+                        
+                        {/* Filename */}
+                        <span className="min-w-0 flex-1 truncate font-mono text-sm text-white">
+                          {file.status === "renamed" && file.previous_filename ? (
+                            <>
+                              <span className="text-[#8b949e]">{file.previous_filename}</span>
+                              <span className="mx-2 text-[#8b949e]">→</span>
+                              {file.filename}
+                            </>
+                          ) : (
+                            file.filename
+                          )}
+                        </span>
+                        
+                        {/* Changes */}
+                        <div className="flex flex-shrink-0 items-center gap-2 text-xs">
+                          {file.additions > 0 && (
+                            <span className="text-[#3fb950]">+{file.additions}</span>
+                          )}
+                          {file.deletions > 0 && (
+                            <span className="text-[#f85149]">-{file.deletions}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-[#30363d] bg-[#161b22] px-4 py-3 text-sm text-[#8b949e]">
+                  No files changed
+                </div>
+              )}
+            </div>
+          </div>
+        ) : selectedCommit ? (
+          <div className="flex flex-1 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#30363d] border-t-[#238636]" />
           </div>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
@@ -363,14 +466,14 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={1.5}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
             </div>
             <div className="flex flex-col gap-1">
               <h3 className="text-lg font-medium text-white">No commit selected</h3>
               <p className="max-w-xs text-sm text-[#8b949e]">
-                Select a commit from the list to view its details
+                Select a commit from the list to view changed files
               </p>
             </div>
           </div>

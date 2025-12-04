@@ -33,6 +33,26 @@ export interface GitHubCommit {
   } | null;
 }
 
+export interface GitHubCommitFile {
+  sha: string;
+  filename: string;
+  status: "added" | "removed" | "modified" | "renamed" | "copied" | "changed" | "unchanged";
+  additions: number;
+  deletions: number;
+  changes: number;
+  patch?: string;
+  previous_filename?: string;
+}
+
+export interface GitHubCommitDetails extends GitHubCommit {
+  files: GitHubCommitFile[];
+  stats: {
+    total: number;
+    additions: number;
+    deletions: number;
+  };
+}
+
 /**
  * Fetches the authenticated user's repositories from GitHub.
  * 
@@ -113,6 +133,38 @@ export async function fetchBranchCommits(
 
   if (!response.ok) {
     throw new Error(`Failed to fetch commits: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetches details for a specific commit, including the list of changed files.
+ * 
+ * @param accessToken - GitHub OAuth access token
+ * @param owner - Repository owner (username or org)
+ * @param repo - Repository name
+ * @param sha - Commit SHA
+ * @returns Commit details including files
+ */
+export async function fetchCommitDetails(
+  accessToken: string,
+  owner: string,
+  repo: string,
+  sha: string
+): Promise<GitHubCommitDetails> {
+  const response = await fetch(
+    `${GITHUB_API_BASE}/repos/${owner}/${repo}/commits/${sha}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch commit details: ${response.statusText}`);
   }
 
   return response.json();
