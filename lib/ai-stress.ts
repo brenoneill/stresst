@@ -26,28 +26,45 @@ export async function introduceAIStress(
     return fallbackStress(content, filename);
   }
 
-  const prompt = `You are a stress engineer tasked with introducing subtle but breaking bugs into code. 
+  // Generate a random seed to encourage variety
+  const randomSeed = Math.random().toString(36).substring(2, 15);
+  const bugCount = Math.floor(Math.random() * 2) + 2; // 2-3 bugs
+  
+  const prompt = `You are a stress engineer tasked with introducing subtle but breaking bugs into code.
+  
+IMPORTANT: Be UNPREDICTABLE. Each time you modify code, choose DIFFERENT types of bugs. Do not fall into patterns.
+
 Your goal is to make changes that:
 1. Will cause the code to fail or behave incorrectly
 2. Are subtle and realistic - the kind of bugs developers actually make
 3. Require debugging skills and code knowledge to identify and fix
 4. Are NOT obvious syntax errors that an IDE would immediately catch
+5. Are VARIED - do not always use the same bug patterns
 
-Types of subtle bugs to introduce (pick 2-3):
-- Off-by-one errors in loops or array access
-- Incorrect comparison operators (< vs <=, == vs ===)
-- Wrong variable names that are similar to correct ones
-- Async/await issues (missing await, race conditions)
-- Incorrect null/undefined checks
-- Wrong order of operations
-- Incorrect string concatenation or template literals
-- Wrong boolean logic (AND vs OR, negation errors)
-- Incorrect type coercion
-- Missing or incorrect error handling
-- Wrong function arguments or parameter order
-- Incorrect regex patterns
-- Timezone or date handling errors
-- Floating point comparison issues
+Random seed for this session: ${randomSeed}
+Number of bugs to introduce: ${bugCount}
+
+Choose ${bugCount} bugs RANDOMLY from this list (vary your choices each time!):
+- Off-by-one errors in loops or array access (e.g., < vs <=, [i] vs [i-1])
+- Incorrect comparison operators (< vs <=, == vs ===, > vs >=)
+- Swapping similar variable names (e.g., user vs users, item vs items, data vs result)
+- Async/await issues (missing await, extra await, race conditions)
+- Incorrect null/undefined checks (removing ?, adding unnecessary ?., wrong nullish coalescing)
+- Wrong order of operations or precedence issues
+- String bugs (wrong concatenation, template literal errors, missing interpolation)
+- Boolean logic errors (AND vs OR, De Morgan's law violations, double negations)
+- Type coercion bugs (Number vs parseInt, implicit conversions)
+- Missing or swapped error handling
+- Wrong function arguments or swapped parameter order
+- Regex pattern bugs (missing escapes, wrong quantifiers, greedy vs lazy)
+- Date/time bugs (timezone issues, wrong format, off-by-one month)
+- Floating point comparison bugs
+- Array method bugs (map vs forEach, find vs filter, wrong callback return)
+- Object property access bugs (dot vs bracket, wrong key names)
+- Scope/closure bugs (var vs let, stale closures)
+- Math bugs (wrong operator, integer division, modulo errors)
+- Return statement bugs (missing return, wrong value, early return)
+- Initialization bugs (wrong default values, undefined initial state)
 
 Here is the code to modify:
 
@@ -94,71 +111,260 @@ The modifiedCode must be the COMPLETE file content with your bugs inserted. Do n
 }
 
 /**
+ * Shuffles an array in place using Fisher-Yates algorithm.
+ * 
+ * @param array - Array to shuffle
+ * @returns The shuffled array (same reference)
+ */
+function shuffleArray<T>(array: T[]): T[] {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+/**
+ * Represents a stress mutation that can be applied to code.
+ */
+interface StressMutation {
+  name: string;
+  /** Check if this mutation can be applied */
+  canApply: (content: string) => boolean;
+  /** Apply the mutation and return the modified content */
+  apply: (content: string) => string;
+  /** Description of what the mutation does */
+  description: string;
+}
+
+/**
  * Fallback stress function if AI is unavailable.
- * Introduces realistic but simpler bugs.
+ * Randomly selects and applies 2-3 mutations from a pool of possible bugs.
+ * 
+ * @param content - Original file content
+ * @param filename - Name of the file being modified
+ * @returns Modified content and list of changes made
  */
 function fallbackStress(content: string, filename: string): { content: string; changes: string[] } {
   const changes: string[] = [];
   let modifiedContent = content;
   const ext = filename.split(".").pop()?.toLowerCase();
   
-  // TypeScript/JavaScript specific stress
+  // Define all possible mutations for TypeScript/JavaScript
+  const jsMutations: StressMutation[] = [
+    {
+      name: "invertStrictEquality",
+      canApply: (c) => c.includes(" === "),
+      apply: (c) => c.replace(" === ", " !== "),
+      description: "Inverted a strict equality check (=== → !==)",
+    },
+    {
+      name: "invertLooseEquality",
+      canApply: (c) => c.includes(" == ") && !c.includes(" === "),
+      apply: (c) => c.replace(" == ", " != "),
+      description: "Inverted an equality check (== → !=)",
+    },
+    {
+      name: "offByOneLessThan",
+      canApply: (c) => /for\s*\([^;]+;\s*\w+\s*<\s*\w+/.test(c),
+      apply: (c) => {
+        const match = c.match(/for\s*\([^;]+;\s*\w+\s*<\s*\w+/);
+        return match ? c.replace(match[0], match[0].replace(" < ", " <= ")) : c;
+      },
+      description: "Changed loop boundary from < to <= (off-by-one error)",
+    },
+    {
+      name: "offByOneGreaterThan",
+      canApply: (c) => /for\s*\([^;]+;\s*\w+\s*>\s*\d+/.test(c),
+      apply: (c) => {
+        const match = c.match(/for\s*\([^;]+;\s*\w+\s*>\s*\d+/);
+        return match ? c.replace(match[0], match[0].replace(" > ", " >= ")) : c;
+      },
+      description: "Changed loop boundary from > to >= (off-by-one error)",
+    },
+    {
+      name: "andToOr",
+      canApply: (c) => c.includes(" && "),
+      apply: (c) => c.replace(" && ", " || "),
+      description: "Changed logical AND (&&) to OR (||)",
+    },
+    {
+      name: "orToAnd",
+      canApply: (c) => c.includes(" || "),
+      apply: (c) => c.replace(" || ", " && "),
+      description: "Changed logical OR (||) to AND (&&)",
+    },
+    {
+      name: "removeAwait",
+      canApply: (c) => /await\s+\w+\(/.test(c),
+      apply: (c) => {
+        const match = c.match(/await\s+\w+\(/);
+        return match ? c.replace(match[0], match[0].replace("await ", "")) : c;
+      },
+      description: "Removed 'await' keyword (async operation now unhandled)",
+    },
+    {
+      name: "lengthMinusOne",
+      canApply: (c) => c.includes(".length]"),
+      apply: (c) => c.replace(".length]", ".length - 1]"),
+      description: "Changed array access from .length to .length - 1",
+    },
+    {
+      name: "lengthOutOfBounds",
+      canApply: (c) => c.includes(".length - 1]"),
+      apply: (c) => c.replace(".length - 1]", ".length]"),
+      description: "Changed array access from .length - 1 to .length (out of bounds)",
+    },
+    {
+      name: "trueToFalse",
+      canApply: (c) => /[=:]\s*true[,;\s\n\r})]/.test(c),
+      apply: (c) => c.replace(/([=:]\s*)true([,;\s\n\r})])/, "$1false$2"),
+      description: "Changed a 'true' value to 'false'",
+    },
+    {
+      name: "falseToTrue",
+      canApply: (c) => /[=:]\s*false[,;\s\n\r})]/.test(c),
+      apply: (c) => c.replace(/([=:]\s*)false([,;\s\n\r})])/, "$1true$2"),
+      description: "Changed a 'false' value to 'true'",
+    },
+    {
+      name: "removeOptionalChaining",
+      canApply: (c) => c.includes("?."),
+      apply: (c) => c.replace("?.", "."),
+      description: "Removed optional chaining operator (?. → .)",
+    },
+    {
+      name: "lessThanToGreaterThan",
+      canApply: (c) => / < /.test(c) && !/for\s*\(/.test(c.split(/ < /)[0].split("\n").pop() || ""),
+      apply: (c) => c.replace(/ < /, " > "),
+      description: "Swapped comparison operator (< → >)",
+    },
+    {
+      name: "greaterThanToLessThan",
+      canApply: (c) => / > /.test(c) && !/for\s*\(/.test(c.split(/ > /)[0].split("\n").pop() || ""),
+      apply: (c) => c.replace(/ > /, " < "),
+      description: "Swapped comparison operator (> → <)",
+    },
+    {
+      name: "plusToMinus",
+      canApply: (c) => /\w\s*\+\s*\d+/.test(c),
+      apply: (c) => c.replace(/(\w\s*)\+(\s*\d+)/, "$1-$2"),
+      description: "Changed arithmetic operator (+ → -)",
+    },
+    {
+      name: "minusToPlus",
+      canApply: (c) => /\w\s*-\s*\d+/.test(c) && !/\.length\s*-\s*1/.test(c),
+      apply: (c) => {
+        // Avoid changing .length - 1 patterns
+        const match = c.match(/(\w)\s*-\s*(\d+)/);
+        if (match && !c.substring(0, c.indexOf(match[0])).endsWith(".length")) {
+          return c.replace(/(\w\s*)-(\s*\d+)/, "$1+$2");
+        }
+        return c;
+      },
+      description: "Changed arithmetic operator (- → +)",
+    },
+    {
+      name: "incrementToDecrement",
+      canApply: (c) => /\w+\+\+/.test(c),
+      apply: (c) => c.replace(/(\w+)\+\+/, "$1--"),
+      description: "Changed increment to decrement (++ → --)",
+    },
+    {
+      name: "decrementToIncrement",
+      canApply: (c) => /\w+--/.test(c),
+      apply: (c) => c.replace(/(\w+)--/, "$1++"),
+      description: "Changed decrement to increment (-- → ++)",
+    },
+    {
+      name: "nullToUndefined",
+      canApply: (c) => /[=:]\s*null[,;\s\n\r})]/.test(c),
+      apply: (c) => c.replace(/([=:]\s*)null([,;\s\n\r})])/, "$1undefined$2"),
+      description: "Changed null to undefined",
+    },
+    {
+      name: "zeroToOne",
+      canApply: (c) => /[\[=]\s*0\s*[;\],\)]/.test(c),
+      apply: (c) => c.replace(/([\[=]\s*)0(\s*[;\],\)])/, "$11$2"),
+      description: "Changed index or value from 0 to 1",
+    },
+    {
+      name: "removeNullishCoalescing",
+      canApply: (c) => c.includes(" ?? "),
+      apply: (c) => {
+        const match = c.match(/(\w+)\s*\?\?\s*([^;\n]+)/);
+        if (match) {
+          return c.replace(match[0], match[1]); // Just use the left side
+        }
+        return c;
+      },
+      description: "Removed nullish coalescing operator (a ?? b → a)",
+    },
+    {
+      name: "mapToForEach",
+      canApply: (c) => /\.map\s*\(/.test(c),
+      apply: (c) => c.replace(/\.map\s*\(/, ".forEach("),
+      description: "Changed .map() to .forEach() (loses return value)",
+    },
+    {
+      name: "addNotOperator",
+      canApply: (c) => /if\s*\(\s*\w+/.test(c) && !/if\s*\(\s*!/.test(c),
+      apply: (c) => c.replace(/if\s*\(\s*(\w+)/, "if (!$1"),
+      description: "Added negation operator to condition",
+    },
+    {
+      name: "removeNotOperator",
+      canApply: (c) => /if\s*\(\s*!\w+/.test(c),
+      apply: (c) => c.replace(/if\s*\(\s*!(\w+)/, "if ($1"),
+      description: "Removed negation operator from condition",
+    },
+  ];
+
+  // Generic mutations that work for any language
+  const genericMutations: StressMutation[] = [
+    {
+      name: "genericTrueToFalse",
+      canApply: (c) => c.includes("true"),
+      apply: (c) => c.replace("true", "false"),
+      description: "Changed a 'true' value to 'false'",
+    },
+    {
+      name: "genericFalseToTrue",
+      canApply: (c) => c.includes("false"),
+      apply: (c) => c.replace("false", "true"),
+      description: "Changed a 'false' value to 'true'",
+    },
+  ];
+
+  // Select mutations based on file type
+  let availableMutations: StressMutation[];
   if (["ts", "tsx", "js", "jsx"].includes(ext || "")) {
-    // Stress 1: Flip a comparison operator
-    if (modifiedContent.includes(" === ")) {
-      modifiedContent = modifiedContent.replace(" === ", " !== ");
-      changes.push("Inverted a strict equality check (=== → !==)");
-    } else if (modifiedContent.includes(" == ")) {
-      modifiedContent = modifiedContent.replace(" == ", " != ");
-      changes.push("Inverted an equality check (== → !=)");
-    }
+    availableMutations = jsMutations;
+  } else {
+    availableMutations = genericMutations;
+  }
 
-    // Stress 2: Change a < to <= (off-by-one)
-    const loopMatch = modifiedContent.match(/for\s*\([^;]+;\s*\w+\s*<\s*\w+/);
-    if (loopMatch) {
-      modifiedContent = modifiedContent.replace(
-        loopMatch[0],
-        loopMatch[0].replace(" < ", " <= ")
-      );
-      changes.push("Changed loop boundary from < to <= (off-by-one error)");
-    }
+  // Filter to only applicable mutations
+  const applicableMutations = availableMutations.filter(m => m.canApply(modifiedContent));
 
-    // Stress 3: Change && to || or vice versa
-    if (modifiedContent.includes(" && ") && !changes.some(c => c.includes("&&"))) {
-      modifiedContent = modifiedContent.replace(" && ", " || ");
-      changes.push("Changed logical AND (&&) to OR (||)");
-    }
-
-    // Stress 4: Remove an 'await' keyword
-    const awaitMatch = modifiedContent.match(/await\s+\w+\(/);
-    if (awaitMatch) {
-      modifiedContent = modifiedContent.replace(awaitMatch[0], awaitMatch[0].replace("await ", ""));
-      changes.push("Removed 'await' keyword (async operation now unhandled)");
-    }
-
-    // Stress 5: Change .length to .length - 1 or vice versa
-    if (modifiedContent.includes(".length]")) {
-      modifiedContent = modifiedContent.replace(".length]", ".length - 1]");
-      changes.push("Changed array access from .length to .length - 1");
-    } else if (modifiedContent.includes(".length - 1]")) {
-      modifiedContent = modifiedContent.replace(".length - 1]", ".length]");
-      changes.push("Changed array access from .length - 1 to .length (out of bounds)");
+  // Shuffle and pick 2-3 random mutations
+  shuffleArray(applicableMutations);
+  const targetBugCount = Math.floor(Math.random() * 2) + 2; // 2-3 bugs
+  
+  for (const mutation of applicableMutations) {
+    if (changes.length >= targetBugCount) break;
+    
+    // Double-check mutation can still be applied (content may have changed)
+    if (mutation.canApply(modifiedContent)) {
+      const newContent = mutation.apply(modifiedContent);
+      if (newContent !== modifiedContent) {
+        modifiedContent = newContent;
+        changes.push(mutation.description);
+      }
     }
   }
 
-  // If no specific changes were made, add a generic one
-  if (changes.length === 0) {
-    // Find and flip any boolean
-    if (modifiedContent.includes("true")) {
-      modifiedContent = modifiedContent.replace("true", "false");
-      changes.push("Changed a 'true' value to 'false'");
-    } else if (modifiedContent.includes("false")) {
-      modifiedContent = modifiedContent.replace("false", "true");
-      changes.push("Changed a 'false' value to 'true'");
-    }
-  }
-
-  // Last resort
+  // Last resort if no changes could be made
   if (changes.length === 0) {
     changes.push("No automatic changes could be applied - file may need manual review");
   }
