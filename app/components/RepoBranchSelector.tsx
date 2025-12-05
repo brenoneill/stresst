@@ -284,7 +284,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   return (
     <div className="flex h-screen w-full">
       {/* Left Panel - Selection & Commits */}
-      <div className="flex h-full w-1/2 flex-col border-r border-[#30363d] p-6">
+      <div className="flex h-full w-[40%] flex-col border-r border-[#30363d] p-6">
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#30363d] bg-[#161b22]">
@@ -420,7 +420,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
       </div>
 
       {/* Right Panel - Commit Details & Files */}
-      <div className="flex h-full w-1/2 flex-col overflow-hidden p-6">
+      <div className="flex h-full w-[60%] flex-col overflow-hidden p-6">
         {loadingDetails ? (
           <div className="flex flex-1 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#30363d] border-t-[#238636]" />
