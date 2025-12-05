@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNotes } from "@/app/context/NotesContext";
 import { Button } from "@/app/components/inputs/Button";
+import { EmptyState, EmptyStateIcons } from "@/app/components/EmptyState";
 
 /**
  * Notes toggle button component for use in headers/navbars.
@@ -182,22 +183,11 @@ export function NotesPanel() {
         {/* Notes List */}
         <div className="h-[calc(100%-8rem)] overflow-y-auto">
           {notes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full border border-gh-border bg-gh-canvas-subtle">
-                <svg className="h-8 w-8 text-gh-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white">No bug reports yet</p>
-                <p className="text-xs text-gh-text-muted">Stress a branch to see reports here</p>
-              </div>
-            </div>
+            <EmptyState
+              icon={EmptyStateIcons.bugReports}
+              title="No bug reports yet"
+              description="Stress a branch to see reports here"
+            />
           ) : (
             <div className="flex flex-col">
               {notes.map((note) => {
