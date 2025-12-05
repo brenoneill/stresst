@@ -39,6 +39,7 @@ export function NotesButton({ onClick }: { onClick: () => void }) {
  */
 export function NotesPanel() {
   const [isOpen, setIsOpen] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const { notes, unreadCount, markAsRead, markAllAsRead, clearNotes } = useNotes();
   const prevNotesCountRef = useRef(notes.length);
 
@@ -49,6 +50,43 @@ export function NotesPanel() {
     }
     prevNotesCountRef.current = notes.length;
   }, [notes.length]);
+
+  /**
+   * Generates a shareable message from a note.
+   */
+  function generateShareMessage(note: typeof notes[0]): string {
+    const branchUrl = getBranchUrl(note.repoName, note.branchName, note.repoOwner);
+    let message = `🐛 Bug Report\n\n`;
+    
+    if (note.branchName) {
+      message += `Branch: ${note.branchName}\n`;
+    }
+    if (branchUrl) {
+      message += `Link: ${branchUrl}\n`;
+    }
+    
+    message += `\nReported Issues:\n`;
+    note.messages.forEach((msg, i) => {
+      message += `${i + 1}. ${msg}\n`;
+    });
+    
+    message += `\nPlease investigate and fix these issues.`;
+    
+    return message;
+  }
+
+  /**
+   * Copies note message to clipboard and shows feedback.
+   */
+  async function copyToClipboard(noteId: string, text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(noteId);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  }
 
   /**
    * Formats a date to a relative time string.
@@ -234,6 +272,37 @@ export function NotesPanel() {
                         </li>
                       ))}
                     </ul>
+
+                    {/* Copy to Clipboard Button */}
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copyToClipboard(note.id, generateShareMessage(note));
+                        }}
+                        className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors ${
+                          copiedId === note.id
+                            ? "bg-[#238636]/20 text-[#3fb950]"
+                            : "text-[#8b949e] hover:bg-[#30363d] hover:text-white"
+                        }`}
+                      >
+                        {copiedId === note.id ? (
+                          <>
+                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Copy to Clipboard
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 );
               })}
