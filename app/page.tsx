@@ -32,7 +32,7 @@ export default async function Home() {
         </div>
 
         {/* Header with user info and logout */}
-        <div className="absolute right-6 top-6 z-20 flex items-center gap-4">
+        <div className="absolute right-6 top-6 flex items-center gap-4">
           <span className="text-sm text-[#8b949e]">
             <span className="font-semibold text-white">{session.user.name}</span>
           </span>

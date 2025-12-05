@@ -10,6 +10,7 @@ export interface Note {
   read: boolean;
   branchName?: string;
   repoName?: string;
+  repoOwner?: string;
 }
 
 interface NotesContextType {
