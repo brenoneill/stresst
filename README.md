@@ -1,36 +1,176 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🔥 stresst
+
+**Stress test your developers with AI-generated bugs**
+
+stresst is a developer training tool that uses AI to introduce realistic, subtle bugs into code. Perfect for:
+
+- 🎓 **Training junior developers** to improve debugging skills
+- 🧪 **Code review practice** - can you spot the bugs?
+- 🎮 **Gamified learning** - compete to find and fix bugs fastest
+- 📋 **Interview preparation** - practice real-world debugging scenarios
+
+## How It Works
+
+1. **Connect your GitHub account** - stresst uses OAuth to access your repositories
+2. **Select a repository and branch** - choose the code you want to stress
+3. **Pick a commit** - select which files to introduce bugs into
+4. **Configure stress level** - Low (1-2 bugs), Medium (2-3 bugs), or High (3-5 bugs)
+5. **Create stressed branch** - AI analyzes your code and introduces realistic bugs
+6. **Share with your team** - send the bug report to a colleague to debug
+
+## Features
+
+### 🤖 AI-Powered Bug Generation
+Uses Claude AI to introduce subtle, realistic bugs that developers actually make:
+- Off-by-one errors
+- Null pointer issues
+- Async/await mistakes
+- Logic inversions
+- Missing error handling
+- And many more...
+
+### 📊 Configurable Stress Levels
+- **🌱 Low** - 1-2 straightforward bugs, easier to spot
+- **🔥 Medium** - 2-3 subtle bugs, requires careful review
+- **💀 High** - 3-5 devious bugs, may include spaghetti code
+
+### 🎯 Focus Areas
+Optionally specify what you want to test (e.g., "async/await", "null handling", "array bounds")
+
+### 🔔 Bug Reports
+Automatic notifications with user-friendly symptom descriptions:
+- "The posts are showing up blank"
+- "The app crashes when I select an item"
+- "Some users' names are showing as 'undefined'"
+
+### 📋 Easy Sharing
+Copy bug reports to clipboard to share with colleagues via email or Slack
+
+### 🗑️ Branch Management
+Delete stressed branches when you're done to keep your repository clean
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 18+
+- A GitHub account
+- An Anthropic API key (for AI-powered bug generation)
+
+### Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```env
+# GitHub OAuth (create at https://github.com/settings/developers)
+AUTH_GITHUB_ID=your_github_client_id
+AUTH_GITHUB_SECRET=your_github_client_secret
+
+# Auth.js secret (generate with: npx auth secret)
+AUTH_SECRET=your_random_secret
+
+# Anthropic API key (get at https://console.anthropic.com)
+ANTHROPIC_API_KEY=your_anthropic_api_key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### GitHub OAuth Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Click "New OAuth App"
+3. Fill in the details:
+   - **Application name**: stresst (or your preferred name)
+   - **Homepage URL**: `http://localhost:3000`
+   - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
+4. Copy the Client ID and Client Secret to your `.env.local`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Installation
 
-## Learn More
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/stresst.git
+cd stresst
 
-To learn more about Next.js, take a look at the following resources:
+# Install dependencies
+npm install
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Run the development server
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000](http://localhost:3000) to get started.
 
-## Deploy on Vercel
+## Usage
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Creating a Stressed Branch
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Sign in with your GitHub account
+2. Select a repository from the dropdown
+3. Choose a branch to base the stressed version on
+4. Click on a commit to see the changed files
+5. Click "Stress this Commit"
+6. Configure:
+   - Branch name suffix (optional)
+   - Stress level (Low/Medium/High)
+   - Focus area (optional)
+7. Click "Create & Stress"
+8. Wait for the AI to introduce bugs
+9. Share the bug report with your team!
+
+### Finding the Bugs
+
+Once a stressed branch is created:
+
+1. Click "Show Stressed Branch" to view the commits
+2. Look for commits starting with "🔥" - these contain the bugs
+3. Review the code changes and try to identify what's wrong
+4. Compare with the original branch to verify your findings
+
+### Cleaning Up
+
+To delete a stressed branch:
+1. Select the stressed branch
+2. Click the "Delete" button next to the branch name
+3. Confirm the deletion
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Authentication**: NextAuth.js v5 with GitHub OAuth
+- **AI**: Anthropic Claude (via Vercel AI SDK)
+- **Styling**: Tailwind CSS
+- **Language**: TypeScript
+
+## Project Structure
+
+```
+stresst/
+├── app/
+│   ├── api/
+│   │   ├── auth/          # NextAuth.js routes
+│   │   └── github/        # GitHub API endpoints
+│   ├── components/        # React components
+│   ├── context/           # React context providers
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page
+├── lib/
+│   ├── ai-stress.ts       # AI bug generation logic
+│   └── github.ts          # GitHub API utilities
+├── auth.ts                # NextAuth.js configuration
+└── types/                 # TypeScript type definitions
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Disclaimer
+
+⚠️ **Use responsibly!** This tool is designed for educational purposes and training scenarios. Only use it on repositories and branches where you have permission to create and modify branches. Never use it on production code or without proper authorization.
+
+---
+
+Built with ❤️ for developer education
