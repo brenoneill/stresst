@@ -607,34 +607,18 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                     </svg>
                   </button>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center rounded-lg border border-[#30363d] bg-[#0d1117]">
-                    <span className="whitespace-nowrap border-r border-[#30363d] bg-[#161b22] px-3 py-2 font-mono text-sm text-[#8b949e]">
-                      stresst-{selectedBranch}-{timestamp}-
-                    </span>
-                    <input
-                      type="text"
-                      value={branchSuffix}
-                      onChange={(e) => setBranchSuffix(e.target.value.replace(/\s/g, "-"))}
-                      placeholder="optional-suffix"
-                      className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-white placeholder-[#8b949e] focus:outline-none"
-                      disabled={creatingBranch}
-                    />
-                  </div>
-                  <button
-                    type="submit"
+                <div className="flex items-center rounded-lg border border-[#30363d] bg-[#0d1117]">
+                  <span className="whitespace-nowrap border-r border-[#30363d] bg-[#161b22] px-3 py-2 font-mono text-sm text-[#8b949e]">
+                    stresst-{selectedBranch}-{timestamp}-
+                  </span>
+                  <input
+                    type="text"
+                    value={branchSuffix}
+                    onChange={(e) => setBranchSuffix(e.target.value.replace(/\s/g, "-"))}
+                    placeholder="optional-suffix"
+                    className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-white placeholder-[#8b949e] focus:outline-none"
                     disabled={creatingBranch}
-                    className="inline-flex flex-shrink-0 items-center gap-2 rounded-lg bg-[#da3633] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#f85149] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {creatingBranch ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    ) : (
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    )}
-                    {creatingBranch ? "Creating & Stressing..." : "Create & Stress"}
-                  </button>
+                  />
                 </div>
 
                 <p className="text-xs text-[#8b949e]">
@@ -709,6 +693,22 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                     </span>
                   </div>
                 </div>
+
+                {/* Submit button */}
+                <button
+                  type="submit"
+                  disabled={creatingBranch}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#da3633] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#f85149] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {creatingBranch ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  )}
+                  {creatingBranch ? "Creating & Stressing..." : "Create & Stress"}
+                </button>
               </form>
             )}
 
