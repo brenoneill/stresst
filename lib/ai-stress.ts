@@ -21,13 +21,13 @@ const STRESS_CONFIGS: Record<StressLevel, StressConfig> = {
     bugCountMin: 2,
     bugCountMax: 3,
     subtlety: "subtle but findable",
-    description: "The bugs should require careful code review to find - off-by-one errors, subtle async issues, edge case failures. A mid-level developer should need to trace through the logic to find them.",
+    description: "The bugs should require careful code review to find - off-by-one errors, subtle async issues, edge case failures. A mid-level developer should need to trace through the logic to find them. You MAY optionally add some convoluted or overly-complex code that obscures the bug - realistic 'clever' code that a developer might write.",
   },
   high: {
     bugCountMin: 3,
     bugCountMax: 5,
     subtlety: "deviously subtle",
-    description: "The bugs should be very hard to find - race conditions, subtle state mutations, edge cases that only fail under specific conditions, cascading errors where one bug masks another. Even senior developers should need debugging tools and careful analysis.",
+    description: "The bugs should be very hard to find - race conditions, subtle state mutations, edge cases that only fail under specific conditions, cascading errors where one bug masks another. Even senior developers should need debugging tools and careful analysis. You are ENCOURAGED to add bloated, spaghetti code - overly nested logic, unnecessary abstractions, confusing control flow - that makes bugs harder to trace. This should still be 'realistic' code that an over-engineering developer might actually write.",
   },
 };
 
@@ -78,13 +78,36 @@ ${config.description}
 
 IMPORTANT: Be UNPREDICTABLE. Each time you modify code, choose DIFFERENT types of bugs. Do not fall into patterns.${focusInstruction}
 
+CRITICAL - DO NOT REVEAL BUG LOCATIONS:
+- Do NOT add comments near bugs like "// bug here" or "// TODO: fix this"
+- Do NOT add comments that hint at what was changed
+- Do NOT make the bugs obvious through naming or comments
+- You MAY add realistic developer comments (like normal code would have), but these must NOT reveal the bug location
+- The goal is for the developer to FIND the bugs through debugging, not through reading comments
+
+THE SCENARIO - A careless developer:
+This is for a learning game. Imagine the code was written by a careless, sloppy developer who:
+- Never writes tests or double-checks their work
+- Copies and pastes code without understanding it
+- Makes "quick fixes" that break other things
+- Over-engineers simple solutions
+- Leaves half-finished refactors
+- Doesn't handle edge cases
+- Gets confused by their own code
+- Makes typos and doesn't proofread
+
+The bugs can be somewhat over-the-top - this is a game after all! Just keep a small thread of plausibility.
+Think: "a bad developer COULD have done this" rather than "a good developer might accidentally do this"
+
 Your goal is to make changes that:
 1. Will cause the code to fail or behave incorrectly
-2. Are realistic - the kind of bugs developers actually make
+2. Could plausibly be written by a careless/incompetent developer
 3. Match the ${stressLevel} stress level described above
 4. Are NOT obvious syntax errors that an IDE would immediately catch
 5. Are VARIED - do not always use the same bug patterns
 6. You MAY add NEW code (helper functions, utilities) that introduces bugs - not just modify existing code
+7. Do NOT leave any hints in comments about where bugs are located
+8. Can be over-the-top but should still have a thread of "someone could have written this"
 
 Random seed for this session: ${randomSeed}
 Number of bugs to introduce: ${bugCount} (stress level: ${stressLevel})
@@ -131,6 +154,18 @@ NEW CODE INJECTION BUGS (add troublesome new code):
 - Add a formatter/transformer that corrupts data in edge cases
 - Add a debounce/throttle wrapper with incorrect timing
 - Add an event handler that doesn't clean up properly
+
+CODE COMPLEXITY BUGS (medium/high stress only - make code harder to follow):
+- Add unnecessary nested ternaries that hide bugs
+- Create overly abstracted wrapper functions with bugs buried inside
+- Add convoluted Promise chains or callback pyramids
+- Introduce unnecessary indirection (function calls function calls function)
+- Add "clever" one-liners that are hard to parse and contain bugs
+- Create complex reduce/map chains with subtle errors
+- Add unnecessary state transformations that obscure data flow
+- Wrap simple logic in overly complex class structures
+- Add confusing variable reassignments that make tracking state difficult
+- Create deeply nested conditionals with subtle logic errors
 
 Here is the code to modify:
 
