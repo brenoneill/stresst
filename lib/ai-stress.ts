@@ -84,11 +84,14 @@ Your goal is to make changes that:
 3. Match the ${stressLevel} stress level described above
 4. Are NOT obvious syntax errors that an IDE would immediately catch
 5. Are VARIED - do not always use the same bug patterns
+6. You MAY add NEW code (helper functions, utilities) that introduces bugs - not just modify existing code
 
 Random seed for this session: ${randomSeed}
 Number of bugs to introduce: ${bugCount} (stress level: ${stressLevel})
 
 Choose ${bugCount} bugs RANDOMLY from this list (vary your choices each time!):
+
+MODIFICATION BUGS (change existing code):
 - Off-by-one errors in loops or array access (e.g., < vs <=, [i] vs [i-1])
 - Incorrect comparison operators (< vs <=, == vs ===, > vs >=)
 - Swapping similar variable names (e.g., user vs users, item vs items, data vs result)
@@ -110,6 +113,25 @@ Choose ${bugCount} bugs RANDOMLY from this list (vary your choices each time!):
 - Return statement bugs (missing return, wrong value, early return)
 - Initialization bugs (wrong default values, undefined initial state)
 
+UI/RUNTIME CRASH BUGS:
+- Remove null/undefined guards causing crashes (accessing .property on null)
+- Remove optional chaining causing "Cannot read property of undefined"
+- Access array elements without bounds checking
+- Call methods on potentially null objects
+- Render undefined/null values in UI components
+- Missing key props in list rendering (React)
+- Incorrect conditional rendering that crashes on null data
+
+NEW CODE INJECTION BUGS (add troublesome new code):
+- Add a "helper" function that subtly transforms data incorrectly and use it
+- Add a utility that has an off-by-one error or wrong boundary condition
+- Add a wrapper function that swallows errors silently
+- Add a caching/memoization helper that returns stale data
+- Add a validation function that has incorrect logic
+- Add a formatter/transformer that corrupts data in edge cases
+- Add a debounce/throttle wrapper with incorrect timing
+- Add an event handler that doesn't clean up properly
+
 Here is the code to modify:
 
 FILENAME: ${filename}
@@ -123,7 +145,8 @@ Respond with ONLY a JSON object in this exact format (no markdown, no explanatio
   "changes": ["description of bug 1", "description of bug 2", "description of bug 3"]
 }
 
-The modifiedCode must be the COMPLETE file content with your bugs inserted. Do not truncate or summarize.`;
+The modifiedCode must be the COMPLETE file content with your bugs inserted. Do not truncate or summarize.
+You CAN add new functions, helpers, or code - not just modify existing code. If you add a helper function, make sure to actually USE it somewhere in the existing code so the bug manifests.`;
 
   try {
     const { text } = await generateText({
