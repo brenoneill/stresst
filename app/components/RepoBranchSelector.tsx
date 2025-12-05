@@ -118,6 +118,11 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
 
       const data = await response.json();
       setCommits(data);
+      
+      // Auto-select the first commit if available
+      if (data.length > 0) {
+        handleCommitSelect(data[0]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setCommits([]);
