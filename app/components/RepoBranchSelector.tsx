@@ -31,6 +31,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   const [showCreateBranch, setShowCreateBranch] = useState(false);
   const [branchSuffix, setBranchSuffix] = useState("");
   const [stressContext, setStressContext] = useState("");
+  const [stressDifficulty, setStressDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [creatingBranch, setCreatingBranch] = useState(false);
   const [branchSuccess, setBranchSuccess] = useState<string | null>(null);
   const [timestamp, setTimestamp] = useState(() => generateTimestamp());
@@ -202,6 +203,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
           branch: fullBranchName,
           files: filesToStress,
           context: stressContext.trim() || undefined,
+          difficulty: stressDifficulty,
         }),
       });
 
@@ -219,6 +221,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
 
       setBranchSuffix("");
       setStressContext("");
+      setStressDifficulty("medium");
       setShowCreateBranch(false);
       
       // Refresh branches list and switch to the new branch
@@ -595,6 +598,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                       setShowCreateBranch(false);
                       setBranchSuffix("");
                       setStressContext("");
+                      setStressDifficulty("medium");
                     }}
                     className="text-[#8b949e] hover:text-white"
                   >
@@ -636,6 +640,54 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                 <p className="text-xs text-[#8b949e]">
                   Full branch name: <code className="text-[#58a6ff]">{getFullBranchName(branchSuffix)}</code>
                 </p>
+
+                {/* Difficulty selector */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-[#8b949e]">Difficulty</label>
+                  <div className="flex rounded-lg border border-[#30363d] bg-[#0d1117] p-1">
+                    <button
+                      type="button"
+                      onClick={() => setStressDifficulty("easy")}
+                      disabled={creatingBranch}
+                      className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                        stressDifficulty === "easy"
+                          ? "bg-[#238636] text-white"
+                          : "text-[#8b949e] hover:text-white"
+                      }`}
+                    >
+                      🌱 Easy
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStressDifficulty("medium")}
+                      disabled={creatingBranch}
+                      className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                        stressDifficulty === "medium"
+                          ? "bg-[#9e6a03] text-white"
+                          : "text-[#8b949e] hover:text-white"
+                      }`}
+                    >
+                      🔥 Medium
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStressDifficulty("hard")}
+                      disabled={creatingBranch}
+                      className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                        stressDifficulty === "hard"
+                          ? "bg-[#da3633] text-white"
+                          : "text-[#8b949e] hover:text-white"
+                      }`}
+                    >
+                      💀 Hard
+                    </button>
+                  </div>
+                  <p className="text-xs text-[#6e7681]">
+                    {stressDifficulty === "easy" && "1-2 straightforward bugs, easier to spot"}
+                    {stressDifficulty === "medium" && "2-3 subtle bugs, requires careful review"}
+                    {stressDifficulty === "hard" && "3-5 devious bugs, may require deep debugging"}
+                  </p>
+                </div>
 
                 {/* Optional stress context */}
                 <div className="flex flex-col gap-1.5">

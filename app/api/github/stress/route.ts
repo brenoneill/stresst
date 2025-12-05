@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { owner, repo, branch, files, context } = body;
+    const { owner, repo, branch, files, context, difficulty } = body;
 
     if (!owner || !repo || !branch || !files || !Array.isArray(files)) {
       return NextResponse.json(
@@ -32,6 +32,10 @@ export async function POST(request: NextRequest) {
 
     // Validate context length if provided
     const stressContext = typeof context === "string" ? context.slice(0, 200) : undefined;
+    
+    // Validate difficulty level
+    const validDifficulties = ["easy", "medium", "hard"] as const;
+    const stressDifficulty: "easy" | "medium" | "hard" = validDifficulties.includes(difficulty) ? difficulty : "medium";
 
     const results: { file: string; success: boolean; changes?: string[]; error?: string }[] = [];
 
@@ -58,7 +62,7 @@ export async function POST(request: NextRequest) {
         const decodedContent = Buffer.from(fileContent.content, "base64").toString("utf-8");
 
         // Use AI to introduce subtle stress
-        const { content: modifiedContent, changes } = await introduceAIStress(decodedContent, filePath, stressContext);
+        const { content: modifiedContent, changes } = await introduceAIStress(decodedContent, filePath, stressContext, stressDifficulty);
 
         // Only update if changes were made
         if (changes.length > 0 && modifiedContent !== decodedContent) {
