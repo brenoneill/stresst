@@ -512,7 +512,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-3">
               {/* View on GitHub Button */}
-              {selectedRepo && (
+              {selectedRepo && !showCreateBranch && (
                 <a
                   href={`https://github.com/${selectedRepo.full_name}/commit/${selectedCommit.sha}`}
                   target="_blank"
