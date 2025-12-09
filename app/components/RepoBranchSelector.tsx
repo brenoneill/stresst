@@ -12,6 +12,7 @@ import { FileChangeList } from "@/app/components/commits/FileChangeList";
 import { CreateBranchForm } from "@/app/components/stress/CreateBranchForm";
 import { StressResultCard } from "@/app/components/stress/StressResultCard";
 import { BranchSuccessCard } from "@/app/components/stress/BranchSuccessCard";
+import { PublicReposList } from "@/app/components/PublicReposList";
 
 interface RepoBranchSelectorProps {
   repos: GitHubRepo[];
@@ -550,6 +551,9 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
             </>
           )}
         </div>
+
+        {/* Public Repos Section */}
+        <PublicReposList />
 
         {/* Error Display */}
         {error && (
