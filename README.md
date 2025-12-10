@@ -94,7 +94,7 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/stresst.git
+git clone https://github.com/brenoneill/stresst.git
 cd stresst
 
 # Install dependencies

@@ -255,7 +255,7 @@ export default async function Home() {
                 <div className="rounded-lg bg-gh-canvas p-4">
                   <code className="text-sm text-gh-text-muted">
                     <span className="text-gh-text-muted">$</span>{" "}
-                    <span className="text-gh-accent">git clone</span> https://github.com/yourusername/stresst.git
+                    <span className="text-gh-accent">git clone</span> https://github.com/brenoneill/stresst.git
                   </code>
                 </div>
                 <div className="rounded-lg bg-gh-canvas p-4">
@@ -275,7 +275,7 @@ export default async function Home() {
             <p className="text-sm text-gh-text-muted">
               See the{" "}
               <a
-                href="https://github.com/yourusername/stresst#readme"
+                href="https://github.com/brenoneill/stresst#readme"
                 className="text-gh-accent hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
