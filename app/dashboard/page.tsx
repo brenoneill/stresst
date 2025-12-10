@@ -31,7 +31,7 @@ export default async function Dashboard() {
       />
 
       {/* Main split layout */}
-      <div className="relative z-10 flex w-full">
+      <div className="relative flex w-full">
         <RepoBranchSelector repos={repos} accessToken={session.accessToken!} />
       </div>
 
