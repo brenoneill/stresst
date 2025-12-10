@@ -208,6 +208,79 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* Choose Your Codebase Section */}
+        <section className="mb-16">
+          <div className="mb-8 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-gh-border bg-gh-canvas-subtle">
+              <svg className="h-5 w-5 text-gh-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-white">Choose Your Codebase</h3>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gh-border-muted">
+                <svg className="h-6 w-6 text-gh-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                  />
+                </svg>
+              </div>
+              <h4 className="mb-2 text-lg font-semibold text-white">Your Own Codebase</h4>
+              <p className="mb-4 text-sm leading-relaxed text-gh-text-muted">
+                Use any repository you have access to. Great for testing your team&apos;s familiarity with
+                your actual production code.
+              </p>
+              <div className="flex items-center gap-2 text-xs text-gh-text-muted">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Requires write access to create branches
+              </div>
+            </div>
+            <div className="relative rounded-xl border-2 border-gh-success bg-gradient-to-br from-gh-success/10 to-gh-canvas-subtle p-6">
+              <div className="absolute -top-3 right-4 rounded-full bg-gh-success px-3 py-1 text-xs font-semibold text-white">
+                Recommended
+              </div>
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gh-success/20">
+                <svg className="h-6 w-6 text-gh-success-fg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <h4 className="mb-2 text-lg font-semibold text-white">Our Practice Codebases</h4>
+              <p className="mb-4 text-sm leading-relaxed text-gh-text-muted">
+                Fork one of our public &quot;dummy&quot; repositories designed specifically for practice.
+                No risk to your real code, and they&apos;re structured to be great learning material.
+              </p>
+              <div className="flex items-center gap-2 text-xs text-gh-success-fg">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                One-click fork available after sign in
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Getting Started Section */}
         <section className="mb-16">
           <div className="mb-8 flex items-center gap-3">
