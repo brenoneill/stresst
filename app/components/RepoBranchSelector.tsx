@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { GitHubRepo, GitHubBranch, GitHubCommit, GitHubCommitDetails } from "@/lib/github";
+import type { GitHubRepo, GitHubBranch, GitHubCommit, GitHubCommitDetails, StressMetadata } from "@/lib/github";
+import { fetchStressMetadata } from "@/lib/github";
 import { useNotes } from "@/app/context/NotesContext";
 import { NotesPanel } from "@/app/components/NotesPanel";
 import { Select } from "@/app/components/inputs/Select";
@@ -86,6 +87,8 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
 
   // Score panel state
   const [showScorePanel, setShowScorePanel] = useState(false);
+  const [stressMetadata, setStressMetadata] = useState<StressMetadata | null>(null);
+  const [loadingMetadata, setLoadingMetadata] = useState(false);
 
   /**
    * Finds a commit with "start" in the message (case-insensitive).
@@ -164,6 +167,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
     setLoadingCommits(true);
     setError(null);
     setShowScorePanel(false);
+    setStressMetadata(null);
 
     try {
       const response = await fetch(
@@ -180,6 +184,25 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
       // Auto-select the first commit if available
       if (data.length > 0) {
         handleCommitSelect(data[0]);
+      }
+
+      // Fetch stress metadata for stresst branches
+      if (branchName.includes("stresst-")) {
+        setLoadingMetadata(true);
+        try {
+          const metadata = await fetchStressMetadata(
+            accessToken,
+            selectedRepo.owner.login,
+            selectedRepo.name,
+            branchName
+          );
+          setStressMetadata(metadata);
+        } catch {
+          // Silently fail - metadata is optional
+          setStressMetadata(null);
+        } finally {
+          setLoadingMetadata(false);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -731,6 +754,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
             completeCommit={completeCommit}
             branchName={selectedBranch || ""}
             onClose={() => setShowScorePanel(false)}
+            stressMetadata={stressMetadata}
           />
         ) : loadingDetails ? (
           <div className="flex flex-1 items-center justify-center">

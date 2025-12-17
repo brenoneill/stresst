@@ -1,6 +1,6 @@
-import type { GitHubCommit } from "@/lib/github";
+import type { GitHubCommit, StressMetadata } from "@/lib/github";
 import { Button } from "@/app/components/inputs/Button";
-import { TrophyIcon, CloseIcon } from "@/app/components/icons";
+import { TrophyIcon, CloseIcon, LightningIcon } from "@/app/components/icons";
 
 interface ScorePanelProps {
   /** The commit where debugging started (contains "start" in message) */
@@ -11,6 +11,8 @@ interface ScorePanelProps {
   branchName: string;
   /** Callback to close the score panel */
   onClose: () => void;
+  /** Optional stress test metadata from .stresst.json */
+  stressMetadata?: StressMetadata | null;
 }
 
 /**
@@ -67,13 +69,27 @@ function calculateTimeDifference(
  * @param branchName - The branch name being viewed
  * @param onClose - Callback to close the panel
  */
+/** Maps stress level to display configuration */
+const DIFFICULTY_CONFIG = {
+  low: { label: "Easy", color: "text-green-400", bg: "bg-green-500/20" },
+  medium: { label: "Medium", color: "text-yellow-400", bg: "bg-yellow-500/20" },
+  high: { label: "Hard", color: "text-red-400", bg: "bg-red-500/20" },
+} as const;
+
 export function ScorePanel({
   startCommit,
   completeCommit,
   branchName,
   onClose,
+  stressMetadata,
 }: ScorePanelProps) {
   const timeDifference = calculateTimeDifference(startCommit, completeCommit);
+  const difficulty = stressMetadata?.stressLevel
+    ? DIFFICULTY_CONFIG[stressMetadata.stressLevel]
+    : null;
+  const repoFullName = stressMetadata
+    ? `${stressMetadata.owner}/${stressMetadata.repo}`
+    : null;
 
   return (
     <div className="flex h-full flex-col gap-6">
@@ -87,6 +103,26 @@ export function ScorePanel({
           <p className="text-sm text-gh-text-muted">Debugging Performance</p>
         </div>
       </div>
+
+      {/* Test Info - Difficulty & Repo */}
+      {stressMetadata && (
+        <div className="flex flex-wrap items-center gap-3">
+          {difficulty && (
+            <div className={`flex items-center gap-2 rounded-full ${difficulty.bg} px-3 py-1.5`}>
+              <LightningIcon className={`h-4 w-4 ${difficulty.color}`} />
+              <span className={`text-sm font-medium ${difficulty.color}`}>
+                {difficulty.label} Difficulty
+              </span>
+            </div>
+          )}
+          {repoFullName && (
+            <div className="flex items-center gap-2 rounded-full bg-gh-canvas-subtle px-3 py-1.5">
+              <span className="text-sm text-gh-text-muted">Repo:</span>
+              <code className="font-mono text-sm text-gh-accent">{repoFullName}</code>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Time Card */}
       <div className="rounded-xl border border-gh-border bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas-default p-6">
