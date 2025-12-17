@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { GitHubCommit, StressMetadata } from "@/lib/github";
 import { Button } from "@/app/components/inputs/Button";
 import { TrophyIcon, CloseIcon } from "@/app/components/icons";
@@ -190,6 +193,15 @@ export function ScorePanel({
   onClose,
   stressMetadata,
 }: ScorePanelProps) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Trigger entrance animation on mount
+  useEffect(() => {
+    // Small delay to ensure the component is mounted before animating
+    const timer = setTimeout(() => setIsVisible(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
+
   const { formatted: timeDifference, ms: timeMs } = calculateTimeDifference(
     startCommit,
     completeCommit
@@ -209,9 +221,12 @@ export function ScorePanel({
   const bugCount = stressMetadata?.bugCount || 1;
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-y-auto pt-10">
+    <div className={`flex h-full flex-col gap-6 overflow-y-auto pt-10 transition-all duration-500 ease-out ${isVisible ? "opacity-100" : "opacity-0"}`}>
       {/* Main Score Card */}
-      <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${scoreRating.gradient} p-[2px]`}>
+      <div 
+        className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${scoreRating.gradient} p-[2px] transition-all duration-700 ease-out ${isVisible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95"}`}
+        style={{ transitionDelay: "100ms" }}
+      >
         <div className="rounded-[14px] bg-gh-canvas-default p-5">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -225,34 +240,54 @@ export function ScorePanel({
           </div>
 
           {/* Grade */}
-          <div className="text-center mb-6">
-            <div className={`inline-flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br ${scoreRating.gradient} mb-3`}>
+          <div 
+            className={`text-center mb-6 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+            style={{ transitionDelay: "300ms" }}
+          >
+            <div className={`inline-flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br ${scoreRating.gradient} mb-3 transition-transform duration-700 ease-out ${isVisible ? "scale-100 rotate-0" : "scale-50 -rotate-12"}`}
+              style={{ transitionDelay: "400ms" }}
+            >
               <span className="text-6xl font-black text-white drop-shadow-lg">
                 {scoreRating.grade}
               </span>
             </div>
-            <div className="flex items-center justify-center gap-2 mb-1">
+            <div 
+              className={`flex items-center justify-center gap-2 mb-1 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
+              style={{ transitionDelay: "500ms" }}
+            >
               <span className="text-2xl">{scoreRating.emoji}</span>
               <h2 className={`text-xl font-bold ${scoreRating.textColor}`}>
                 {scoreRating.label}
               </h2>
             </div>
-            <p className="text-sm text-white">
+            <p 
+              className={`text-sm text-white transition-all duration-500 ease-out ${isVisible ? "opacity-100" : "opacity-0"}`}
+              style={{ transitionDelay: "600ms" }}
+            >
               {scoreRating.description}
             </p>
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-lg bg-gh-canvas-subtle p-3 text-center">
+            <div 
+              className={`rounded-lg bg-gh-canvas-subtle p-3 text-center transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+              style={{ transitionDelay: "650ms" }}
+            >
               <p className="text-2xl font-bold text-white">{timeDifference}</p>
               <p className="text-xs text-gh-text-muted mt-1">Time</p>
             </div>
-            <div className="rounded-lg bg-gh-canvas-subtle p-3 text-center">
+            <div 
+              className={`rounded-lg bg-gh-canvas-subtle p-3 text-center transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+              style={{ transitionDelay: "750ms" }}
+            >
               <p className="text-2xl font-bold text-white">{bugCount}</p>
               <p className="text-xs text-gh-text-muted mt-1">{bugCount === 1 ? "Bug" : "Bugs"}</p>
             </div>
-            <div className="rounded-lg bg-gh-canvas-subtle p-3 text-center">
+            <div 
+              className={`rounded-lg bg-gh-canvas-subtle p-3 text-center transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+              style={{ transitionDelay: "850ms" }}
+            >
               <p className={`text-2xl font-bold ${difficulty?.color || "text-white"}`}>
                 {difficulty?.label || "—"}
               </p>
@@ -263,12 +298,18 @@ export function ScorePanel({
       </div>
 
       {/* Timeline - Compact */}
-      <div className="space-y-3">
+      <div 
+        className={`space-y-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+        style={{ transitionDelay: "900ms" }}
+      >
         <h3 className="text-xs font-semibold tracking-wide text-gh-text-muted uppercase">Timeline</h3>
         
         <div className="space-y-2">
           {/* Start */}
-          <div className="flex items-center gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-3">
+          <div 
+            className={`flex items-center gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
+            style={{ transitionDelay: "1000ms" }}
+          >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/20">
               <span className="text-sm">🚀</span>
             </div>
@@ -287,11 +328,17 @@ export function ScorePanel({
 
           {/* Connector */}
           <div className="flex justify-center">
-            <div className="h-4 w-0.5 bg-gh-border" />
+            <div 
+              className={`w-0.5 bg-gh-border transition-all duration-300 ease-out ${isVisible ? "h-4" : "h-0"}`}
+              style={{ transitionDelay: "1100ms" }}
+            />
           </div>
 
           {/* Complete */}
-          <div className="flex items-center gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-3">
+          <div 
+            className={`flex items-center gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
+            style={{ transitionDelay: "1150ms" }}
+          >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/20">
               <span className="text-sm">✅</span>
             </div>
@@ -311,7 +358,10 @@ export function ScorePanel({
       </div>
 
       {/* Footer */}
-      <div className="mt-auto pt-4 border-t border-gh-border">
+      <div 
+        className={`mt-auto pt-4 border-t border-gh-border transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+        style={{ transitionDelay: "1250ms" }}
+      >
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={onClose}>
             <CloseIcon className="h-4 w-4" />
