@@ -73,11 +73,11 @@ export function NotesPanel() {
     prevNotesCountRef.current = notes.length;
   }, [notes.length]);
 
-  // Auto-open panel when a new branch change is added
+  // Auto-open panel when a new branch change is added (stays on bug-reports tab to avoid spoilers)
   useEffect(() => {
     if (branchChanges.length > prevBranchChangesCountRef.current) {
       setIsOpen(true);
-      setActiveTab("branch-changes");
+      // Don't switch to branch-changes tab - those are "spoilers" for the bug hunt
     }
     prevBranchChangesCountRef.current = branchChanges.length;
   }, [branchChanges.length]);
