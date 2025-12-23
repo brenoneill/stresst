@@ -15,19 +15,19 @@ const STRESS_CONFIGS: Record<StressLevel, StressConfig> = {
     bugCountMin: 1,
     bugCountMax: 2,
     subtlety: "relatively obvious",
-    description: "The bugs should be somewhat noticeable - things like obvious operator mistakes, clear logic inversions, or simple typos in variable names. A junior developer should be able to spot them with careful review.",
+    description: "The bugs should be somewhat noticeable - things like obvious operator mistakes, clear logic inversions, or simple typos in variable names. A junior developer should be able to spot them with careful review. Keep the code structure simple and don't add extra abstraction layers.",
   },
   medium: {
     bugCountMin: 2,
     bugCountMax: 3,
     subtlety: "subtle but findable",
-    description: "The bugs should require careful code review to find - off-by-one errors, missing awaits that cause Promise objects to be used as values, edge case failures. A mid-level developer should need to trace through the logic to find them. You MAY optionally add some convoluted or overly-complex code that obscures the bug - realistic 'clever' code that a developer might write. All bugs must be deterministic and reproducible.",
+    description: "The bugs should require careful code review to find - off-by-one errors, missing awaits that cause Promise objects to be used as values, edge case failures. A mid-level developer should need to trace through the logic to find them. You SHOULD add 1-2 'data layer' helper functions that data passes through before being used - mimicking technical debt where someone added abstraction layers 'for future flexibility'. The bug can be hidden in these intermediate functions. All bugs must be deterministic and reproducible.",
   },
   high: {
     bugCountMin: 2,
     bugCountMax: 3,
     subtlety: "deviously subtle",
-    description: "The bugs should be very hard to find but ALWAYS reproducible - subtle state mutations, edge cases with specific inputs, cascading errors where one bug masks another, deeply nested logic errors. Even senior developers should need debugging tools and careful analysis. You are ENCOURAGED to add bloated, spaghetti code - overly nested logic, unnecessary abstractions, confusing control flow - that makes bugs harder to trace. This should still be 'realistic' code that an over-engineering developer might actually write. IMPORTANT: All bugs must be 100% deterministic - no race conditions or timing-dependent issues.",
+    description: "The bugs should be very hard to find but ALWAYS reproducible - subtle state mutations, edge cases with specific inputs, cascading errors where one bug masks another. Even senior developers should need debugging tools and careful analysis. You MUST add multiple 'data layer' functions that pipe data through 2-4 transformation steps before it reaches its destination - realistic 'legacy code' technical debt where data flows through normalizers, formatters, validators, mappers, etc. Hide bugs deep in these pipelines where a developer must trace the entire data flow to find them. This should mimic real legacy codebases with accumulated abstractions. IMPORTANT: All bugs must be 100% deterministic - no race conditions or timing-dependent issues.",
   },
 };
 
@@ -202,6 +202,59 @@ AVOID THESE - THEY RARELY HAVE VISIBLE IMPACT:
 - Changes to logging or debugging code
 - Changes to comments or type annotations
 - Micro-optimizations or performance-only bugs
+
+=== TECHNICAL DEBT / DATA LAYER COMPLEXITY (MEDIUM/HIGH STRESS ONLY) ===
+For MEDIUM and HIGH stress levels, simulate legacy codebase technical debt by adding "data layer" functions that data must pass through. This makes bugs MUCH harder to trace because developers must follow the data flow through multiple transformations.
+
+FOR MEDIUM STRESS - Add 1-2 intermediate functions:
+- Add a "normalizer" function that transforms data before it's used
+- Add a "formatter" that prepares data for display
+- Add a "validator" that checks and potentially modifies data
+- The bug should be in one of these intermediate functions, not the main code
+
+Example pattern for MEDIUM:
+\`\`\`
+// Added "for consistency" by a previous developer
+function normalizeUserData(user) {
+  return {
+    ...user,
+    name: user.name.slice(1), // BUG: cuts off first character
+    id: user.id
+  };
+}
+
+// Original code now pipes through the normalizer
+const displayUser = normalizeUserData(rawUser);
+\`\`\`
+
+FOR HIGH STRESS - Add 2-4 chained transformation functions (data pipeline):
+- Create a pipeline where data flows: raw → validate → normalize → format → transform → display
+- Each function should look "reasonable" but one contains the bug
+- Add realistic-looking comments like "// TODO: refactor this" or "// Legacy - do not remove"
+- The functions should have plausible names that suggest they serve a purpose
+
+Example pattern for HIGH:
+\`\`\`
+// Data processing pipeline (added during Q3 refactor)
+const processItems = (items) => {
+  return items
+    .map(validateItem)
+    .map(normalizeItem)
+    .filter(isValidItem)
+    .map(formatForDisplay);
+};
+
+function validateItem(item) { /* looks fine */ return item; }
+function normalizeItem(item) { 
+  // Standardize IDs across system
+  const baseId = items[0]?.id || item.id; // BUG: uses first item's ID for ALL items
+  return { ...item, id: baseId };
+}
+function isValidItem(item) { return item.status !== 'deleted'; }
+function formatForDisplay(item) { /* looks fine */ return item; }
+\`\`\`
+
+The goal is to make the developer trace through multiple functions to find where the data gets corrupted. This mimics real-world debugging of legacy systems with accumulated technical debt.
 
 Here is the code to modify:
 
