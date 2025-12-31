@@ -254,12 +254,12 @@ export const BUG_TYPES: BugType[] = [
     id: "wrong-nullish",
     category: "UNDEFINED_NULL",
     name: "Wrong Nullish Coalescing",
-    description: "Use ?? when should use || or vice versa, or use wrong fallback",
+    description: "Use ?? when should use || or vice versa, causing wrong values to display",
     examples: [
-      "value ?? 'default' when value could be empty string",
-      "count || 0 when 0 is valid",
+      "value ?? 'default' when value could be empty string (empty string shows as 'default')",
+      "count || 0 when 0 is valid (0 gets replaced with fallback)",
     ],
-    sampleSymptom: "On the form: Default values aren't appearing correctly. Empty fields should show placeholder text but don't.",
+    sampleSymptom: "On the form: When I enter '0' or an empty string, it shows 'default' or 'N/A' instead. Valid zero values are being replaced with fallback text.",
   },
 
   // === CALCULATION/DISPLAY BUGS ===
@@ -380,12 +380,12 @@ export const BUG_TYPES: BugType[] = [
     id: "wrong-promise-method",
     category: "ASYNC",
     name: "Promise.all vs Promise.allSettled",
-    description: "Use Promise.all when should use Promise.allSettled or race",
+    description: "Use Promise.all when should use Promise.allSettled, causing entire page to fail if any request fails",
     examples: [
-      "Promise.all([...]) // fails if any promise rejects",
-      "Promise.race([...]) // only returns first result",
+      "Promise.all([fetchUser(), fetchPosts(), fetchComments()]) // if any fails, all fail",
+      "await Promise.all(requests) // one failed request breaks everything",
     ],
-    sampleSymptom: "When loading the page: Sometimes the whole page fails to load if any single request has an issue.",
+    sampleSymptom: "When loading the page: If any single API request fails, the entire page shows a blank white screen. All data disappears even though most requests succeeded.",
   },
 
   // === FORM/INPUT BUGS ===
@@ -629,13 +629,13 @@ export const BUG_TYPES: BugType[] = [
     id: "react-useeffect-cleanup",
     category: "REACT",
     framework: "react",
-    name: "Missing useEffect Cleanup",
-    description: "Create subscriptions, timers, or event listeners without cleanup causing memory leaks",
+    name: "Missing useEffect Cleanup - Multiple Timers",
+    description: "Create multiple setInterval timers without cleanup, causing visible duplicate actions or counters incrementing multiple times",
     examples: [
-      "useEffect(() => { const timer = setInterval(() => {}, 1000); }, []); // no cleanup",
-      "useEffect(() => { window.addEventListener('resize', handler); }, []); // no removeEventListener",
+      "useEffect(() => { const timer = setInterval(() => { setCount(c => c + 1); }, 1000); }, []); // no cleanup, creates new timer on each mount",
+      "useEffect(() => { const timer = setInterval(() => { updateData(); }, 500); }, []); // data updates multiple times per second",
     ],
-    sampleSymptom: "After navigating away and back: The page becomes slower and slower. Memory usage keeps increasing each time I visit the page.",
+    sampleSymptom: "After navigating away and back: The counter increments 2x, 3x, 4x faster each time. After 3 visits, it's counting up 4 times per second instead of once.",
   },
   {
     id: "react-conditional-render-bug",
@@ -686,16 +686,16 @@ export const BUG_TYPES: BugType[] = [
     sampleSymptom: "When the page loads: Console shows 'Hydration failed' errors. The page flickers and some content doesn't match between server and client.",
   },
   {
-    id: "react-usememo-useless",
+    id: "react-usememo-wrong-deps",
     category: "REACT",
     framework: "react",
-    name: "Useless useMemo/useCallback",
-    description: "Wrap values in useMemo/useCallback but dependencies change every render, making it useless",
+    name: "useMemo/useCallback with Wrong Dependencies",
+    description: "Use useMemo/useCallback with missing or wrong dependencies, causing stale values or incorrect calculations",
     examples: [
-      "const memoized = useMemo(() => items, [items]); // but items is new array every render",
-      "const callback = useCallback(() => handleClick(id), [id, handleClick]); // handleClick recreated each render",
+      "const filtered = useMemo(() => items.filter(i => i.category === selectedCategory), []); // missing selectedCategory",
+      "const callback = useCallback(() => { setValue(value + 1); }, []); // missing value, always uses initial value",
     ],
-    sampleSymptom: "The component: Re-renders constantly even though I wrapped everything in useMemo. Performance is worse than before optimization.",
+    sampleSymptom: "In the filtered list: Changing the category filter doesn't update the list. It always shows items from the first category I selected, even after I change it.",
   },
 ];
 

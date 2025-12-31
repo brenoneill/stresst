@@ -214,7 +214,8 @@ function formatBugInstructions(bugTypes: BugType[]): string {
   Description: ${bug.description}
   Examples:
 ${examples}
-  Expected symptom: "${bug.sampleSymptom}"`;
+  Expected symptom: "${bug.sampleSymptom}"
+  IMPORTANT: This bug MUST be a CLEAR, VISIBLE breaking change that happens 100% of the time. The symptom must be immediately noticeable to a user.`;
   }).join("\n\n");
 }
 
@@ -306,6 +307,15 @@ CRITICAL RULES:
 6. You MAY add helper functions to hide bugs (especially for medium/high stress)
 7. The code must still compile/parse correctly
 
+MANDATORY BUG REQUIREMENTS:
+- Bugs MUST be CLEARLY VISIBLE breaking changes - users must immediately see something is wrong
+- Bugs MUST cause OBVIOUS failures: wrong data displayed, missing items, crashes, incorrect calculations, reversed logic
+- DO NOT create subtle performance issues like "app gets slower" or "memory leaks" - these are not noticeable enough
+- Bugs MUST be 100% RELIABLE - they must happen every single time, not "sometimes" or "occasionally"
+- Each bug MUST produce a specific, describable symptom that a QA tester can clearly report
+- Examples of GOOD bugs: "All prices show $0", "Last 2 items missing", "Names appear backwards", "App crashes on load"
+- Examples of BAD bugs: "App is slightly slower", "Memory usage increases over time", "Sometimes fails"
+
 THE SCENARIO - A careless developer:
 Imagine the code was written by a sloppy developer who:
 - Never writes tests or double-checks their work
@@ -332,6 +342,9 @@ IMPORTANT about "symptoms": Write these like bug reports from a QA tester who se
 - Format: "[Location/Action]: [What went wrong]. Expected [X] but got [Y]."
 - Do NOT mention variable names, function names, or line numbers
 - Describe what the user SEES, not what the code does
+- Symptoms MUST describe CLEAR, VISIBLE failures that happen 100% of the time
+- Examples: "All prices show $0.00", "Last 2 items are missing", "App crashes with white screen", "Names appear backwards"
+- DO NOT write symptoms like "app is slower" or "sometimes fails" - these are not clear enough
 
 The modifiedCode must be the COMPLETE file content. Do not truncate or summarize.`;
 
