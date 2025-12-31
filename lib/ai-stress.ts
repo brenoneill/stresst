@@ -32,6 +32,16 @@ const STRESS_CONFIGS: Record<StressLevel, StressConfig> = {
 };
 
 /**
+ * Custom error class for AI stress generation failures.
+ */
+export class AIStressError extends Error {
+  constructor(message: string, public readonly cause?: unknown) {
+    super(message);
+    this.name = "AIStressError";
+  }
+}
+
+/**
  * Uses AI to introduce subtle but nasty breaking changes to code.
  * The changes should be realistic bugs that require debugging skills to find and fix.
  * 
@@ -43,6 +53,7 @@ const STRESS_CONFIGS: Record<StressLevel, StressConfig> = {
  * @param stressLevel - Stress level: "low", "medium", or "high"
  * @param targetBugCount - Optional specific number of bugs to introduce (overrides stress level bug count)
  * @returns Modified content with AI-generated breaking changes, descriptions, and user-facing symptoms
+ * @throws AIStressError if AI is unavailable or fails to generate bugs
  */
 export async function introduceAIStress(
   content: string,
@@ -57,9 +68,11 @@ export async function introduceAIStress(
   try {
     const anthropicModule = await import("@ai-sdk/anthropic");
     anthropic = anthropicModule.anthropic;
-  } catch {
-    console.warn("@ai-sdk/anthropic not installed, using fallback stress");
-    return fallbackStress(content, filename, context, stressLevel);
+  } catch (error) {
+    throw new AIStressError(
+      "AI SDK not available. Please ensure @ai-sdk/anthropic is installed and ANTHROPIC_API_KEY is set.",
+      error
+    );
   }
 
   const config = STRESS_CONFIGS[stressLevel];
@@ -371,13 +384,13 @@ You CAN add new functions, helpers, or code - not just modify existing code. If 
     // Parse the response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error("Failed to parse AI response");
+      throw new AIStressError("Failed to parse AI response - no JSON found in output");
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
     
     if (!parsed.modifiedCode || !parsed.changes) {
-      throw new Error("Invalid AI response structure");
+      throw new AIStressError("Invalid AI response structure - missing modifiedCode or changes");
     }
 
     return {
@@ -386,9 +399,13 @@ You CAN add new functions, helpers, or code - not just modify existing code. If 
       symptoms: parsed.symptoms || generateFallbackSymptoms(parsed.changes),
     };
   } catch (error) {
-    console.error("AI stress generation failed:", error);
-    // Fallback to basic stress if AI fails
-    return fallbackStress(content, filename, context, stressLevel, targetBugCount);
+    if (error instanceof AIStressError) {
+      throw error;
+    }
+    throw new AIStressError(
+      "AI stress generation failed. Please check your API key and try again.",
+      error
+    );
   }
 }
 
@@ -432,314 +449,3 @@ function shuffleArray<T>(array: T[]): T[] {
   }
   return array;
 }
-
-/**
- * Represents a stress mutation that can be applied to code.
- */
-interface StressMutation {
-  name: string;
-  /** Check if this mutation can be applied */
-  canApply: (content: string) => boolean;
-  /** Apply the mutation and return the modified content */
-  apply: (content: string) => string;
-  /** Description of what the mutation does */
-  description: string;
-}
-
-/**
- * Fallback stress function if AI is unavailable.
- * Randomly selects and applies mutations based on stress level.
- * 
- * @param content - Original file content
- * @param filename - Name of the file being modified
- * @param _context - Optional context (unused in fallback, but accepted for API compatibility)
- * @param stressLevel - Stress level determines number of bugs to apply
- * @param targetBugCount - Optional specific number of bugs to introduce (overrides stress level bug count)
- * @returns Modified content, list of changes made, and user-facing symptoms
- */
-function fallbackStress(content: string, filename: string, _context?: string, stressLevel: StressLevel = "medium", targetBugCount?: number): { content: string; changes: string[]; symptoms: string[] } {
-  const changes: string[] = [];
-  let modifiedContent = content;
-  const ext = filename.split(".").pop()?.toLowerCase();
-  
-  // Get bug count based on stress level
-  const config = STRESS_CONFIGS[stressLevel];
-  
-  // Define all possible mutations for TypeScript/JavaScript
-  // PRIORITY: High-impact, visually noticeable bugs first
-  const jsMutations: StressMutation[] = [
-    // === HIGH IMPACT: String/Text Corruption ===
-    {
-      name: "sliceOffFirstChar",
-      canApply: (c) => /\.\w+\s*[,\)\}]/.test(c) && /name|title|label|text|value|query|search|input/i.test(c),
-      apply: (c) => {
-        // Find a string property and slice off first character
-        const match = c.match(/(\.\w*(name|title|label|text|value|query|search|input)\w*)/i);
-        if (match) {
-          return c.replace(match[1], match[1] + ".slice(1)");
-        }
-        return c;
-      },
-      description: "Added .slice(1) to a text field, cutting off the first character",
-    },
-    {
-      name: "sliceOffLastChars",
-      canApply: (c) => /\.\w+\s*[,\)\}]/.test(c) && /name|title|label|text|description/i.test(c),
-      apply: (c) => {
-        const match = c.match(/(\.\w*(name|title|label|text|description)\w*)/i);
-        if (match) {
-          return c.replace(match[1], match[1] + ".slice(0, -3)");
-        }
-        return c;
-      },
-      description: "Added .slice(0, -3) to a text field, cutting off the last 3 characters",
-    },
-
-    // === HIGH IMPACT: Data Disappearing ===
-    {
-      name: "hideLastItems",
-      canApply: (c) => /\.map\s*\(/.test(c),
-      apply: (c) => c.replace(/\.map\s*\(/, ".slice(0, -2).map("),
-      description: "Added .slice(0, -2) before .map(), hiding the last 2 items",
-    },
-    {
-      name: "filterOutHalfItems",
-      canApply: (c) => /\.map\s*\(/.test(c) && !/\.filter\s*\(/.test(c),
-      apply: (c) => c.replace(/\.map\s*\(/, ".filter((_, i) => i % 2 === 0).map("),
-      description: "Added filter that only shows every other item (even indices)",
-    },
-    {
-      name: "returnEmptyArray",
-      canApply: (c) => /return\s+\w+\.map\s*\(/.test(c),
-      apply: (c) => c.replace(/return\s+(\w+)\.map\s*\(/, "return []; $1.map("),
-      description: "Return empty array before the actual mapped data",
-    },
-
-    // === HIGH IMPACT: All Items Same Value ===
-    {
-      name: "useFirstIdForAll",
-      canApply: (c) => /\.map\s*\(\s*\(\s*(\w+)/.test(c) && /\.id|\.key|\.uuid/i.test(c),
-      apply: (c) => {
-        const itemMatch = c.match(/\.map\s*\(\s*\(\s*(\w+)/);
-        if (itemMatch) {
-          const itemVar = itemMatch[1];
-          // Find the array being mapped
-          const arrayMatch = c.match(/(\w+)\.map\s*\(/);
-          if (arrayMatch) {
-            const arrayName = arrayMatch[1];
-            // Replace item.id with array[0].id
-            return c.replace(new RegExp(`${itemVar}\\.id`, 'g'), `${arrayName}[0].id`);
-          }
-        }
-        return c;
-      },
-      description: "Changed to use first item's ID for all items (all IDs now identical)",
-    },
-
-    // === HIGH IMPACT: Data Showing as Undefined ===
-    {
-      name: "wrongPropertyName",
-      canApply: (c) => /\.(name|title|email|username)\b/.test(c),
-      apply: (c) => {
-        const props = ['name', 'title', 'email', 'username'];
-        for (const prop of props) {
-          if (c.includes(`.${prop}`)) {
-            const typo = prop.slice(0, -1); // Remove last char: name -> nam
-            return c.replace(new RegExp(`\\.${prop}\\b`), `.${typo}`);
-          }
-        }
-        return c;
-      },
-      description: "Typo in property name causes undefined (e.g., .name → .nam)",
-    },
-    {
-      name: "setPropertyToNull",
-      canApply: (c) => /const\s+\w+\s*=\s*\{/.test(c),
-      apply: (c) => {
-        // Find an object and set a visible property to null
-        const match = c.match(/(const\s+\w+\s*=\s*\{[^}]*)(name|title|value|data):\s*[^,}]+/);
-        if (match) {
-          return c.replace(match[0], match[1] + match[2] + ": null");
-        }
-        return c;
-      },
-      description: "Set a key property to null, causing undefined display",
-    },
-
-    // === HIGH IMPACT: Null Pointer / Crash ===
-    {
-      name: "removeOptionalChaining",
-      canApply: (c) => c.includes("?."),
-      apply: (c) => c.replace(/\?\./g, "."),
-      description: "Removed all optional chaining (?. → .) causing null pointer crashes",
-    },
-    {
-      name: "deletePropertyBeforeUse",
-      canApply: (c) => /const\s+(\w+)\s*=\s*\{/.test(c) && /\.name|\.data|\.items/.test(c),
-      apply: (c) => {
-        const objMatch = c.match(/const\s+(\w+)\s*=\s*\{/);
-        if (objMatch) {
-          const objName = objMatch[1];
-          // Add delete statement after the object
-          return c.replace(objMatch[0], objMatch[0]).replace(
-            new RegExp(`(const\\s+${objName}\\s*=\\s*\\{[^}]+\\};?)`),
-            `$1\ndelete ${objName}.data;`
-          );
-        }
-        return c;
-      },
-      description: "Deleted a property from object before it's accessed",
-    },
-
-    // === HIGH IMPACT: Calculation/Count Bugs ===
-    {
-      name: "wrongLengthCount",
-      canApply: (c) => /\.length\b/.test(c) && !/\.length\s*[-+]/.test(c),
-      apply: (c) => c.replace(/\.length\b/, ".length - 2"),
-      description: "Changed .length to .length - 2, showing wrong item count",
-    },
-    {
-      name: "returnZeroPrice",
-      canApply: (c) => /price|total|amount|cost|sum/i.test(c) && /return\s+\w+/.test(c),
-      apply: (c) => {
-        const match = c.match(/return\s+(\w*(price|total|amount|cost|sum)\w*)/i);
-        if (match) {
-          return c.replace(match[0], "return 0");
-        }
-        return c;
-      },
-      description: "Return 0 instead of calculated price/total",
-    },
-
-    // === HIGH IMPACT: Map/forEach swap ===
-    {
-      name: "mapToForEach",
-      canApply: (c) => /\.map\s*\(/.test(c) && /return.*\.map/.test(c),
-      apply: (c) => c.replace(/\.map\s*\(/, ".forEach("),
-      description: "Changed .map() to .forEach() - returns undefined instead of array",
-    },
-
-    // === MEDIUM IMPACT: Conditional/Logic bugs ===
-    {
-      name: "invertConditionalDisplay",
-      canApply: (c) => /\?\s*</.test(c) || /&&\s*</.test(c),
-      apply: (c) => {
-        // Invert conditional rendering
-        if (c.includes("? <")) {
-          return c.replace(/(\w+)\s*\?\s*</, "!$1 ? <");
-        }
-        if (c.includes("&& <")) {
-          return c.replace(/(\w+)\s*&&\s*</, "!$1 && <");
-        }
-        return c;
-      },
-      description: "Inverted conditional rendering - shows when should hide, hides when should show",
-    },
-    {
-      name: "returnUndefinedFromFunction",
-      canApply: (c) => /function\s+\w+|const\s+\w+\s*=\s*\([^)]*\)\s*=>/.test(c),
-      apply: (c) => {
-        // Add early return undefined at start of function
-        const match = c.match(/(function\s+\w+[^{]*\{|const\s+\w+\s*=\s*\([^)]*\)\s*=>\s*\{)/);
-        if (match) {
-          return c.replace(match[0], match[0] + "\n  return undefined;");
-        }
-        return c;
-      },
-      description: "Added early return undefined, function returns nothing",
-    },
-
-    // === LOWER PRIORITY: Operator bugs (only if needed) ===
-    {
-      name: "offByOneLessThan",
-      canApply: (c) => /for\s*\([^;]+;\s*\w+\s*<\s*\w+/.test(c),
-      apply: (c) => {
-        const match = c.match(/for\s*\([^;]+;\s*\w+\s*<\s*\w+/);
-        return match ? c.replace(match[0], match[0].replace(" < ", " <= ")) : c;
-      },
-      description: "Changed loop boundary from < to <= (off-by-one, may process extra item)",
-    },
-    {
-      name: "zeroToOne",
-      canApply: (c) => /\[\s*0\s*\]/.test(c),
-      apply: (c) => c.replace(/\[\s*0\s*\]/, "[1]"),
-      description: "Changed array index from [0] to [1], skipping first item",
-    },
-    {
-      name: "removeAwait",
-      canApply: (c) => /await\s+\w+\(/.test(c),
-      apply: (c) => {
-        const match = c.match(/await\s+\w+\(/);
-        return match ? c.replace(match[0], match[0].replace("await ", "")) : c;
-      },
-      description: "Removed 'await' keyword - data shows as [object Promise] or undefined",
-    },
-  ];
-
-  // Generic mutations that work for any language - prioritizing visible impact
-  const genericMutations: StressMutation[] = [
-    {
-      name: "genericReturnNull",
-      canApply: (c) => /return\s+\w+/.test(c),
-      apply: (c) => c.replace(/return\s+\w+/, "return null"),
-      description: "Changed return value to null - data shows as null/empty",
-    },
-    {
-      name: "genericReturnEmptyString",
-      canApply: (c) => /return\s+["'`]/.test(c),
-      apply: (c) => c.replace(/return\s+["'`][^"'`]*["'`]/, 'return ""'),
-      description: "Changed return value to empty string - text displays as blank",
-    },
-    {
-      name: "genericTrueToFalse",
-      canApply: (c) => c.includes("true"),
-      apply: (c) => c.replace("true", "false"),
-      description: "Changed 'true' to 'false' - affects visibility/display logic",
-    },
-    {
-      name: "genericFalseToTrue",
-      canApply: (c) => c.includes("false"),
-      apply: (c) => c.replace("false", "true"),
-      description: "Changed 'false' to 'true' - affects visibility/display logic",
-    },
-  ];
-
-  // Select mutations based on file type
-  let availableMutations: StressMutation[];
-  if (["ts", "tsx", "js", "jsx"].includes(ext || "")) {
-    availableMutations = jsMutations;
-  } else {
-    availableMutations = genericMutations;
-  }
-
-  // Filter to only applicable mutations
-  const applicableMutations = availableMutations.filter(m => m.canApply(modifiedContent));
-
-  // Shuffle and pick random mutations based on difficulty
-  shuffleArray(applicableMutations);
-  // Use targetBugCount if provided, otherwise calculate from stress level config
-  const bugCount = targetBugCount !== undefined 
-    ? targetBugCount 
-    : Math.floor(Math.random() * (config.bugCountMax - config.bugCountMin + 1)) + config.bugCountMin;
-  
-  for (const mutation of applicableMutations) {
-    if (changes.length >= bugCount) break;
-    
-    // Double-check mutation can still be applied (content may have changed)
-    if (mutation.canApply(modifiedContent)) {
-      const newContent = mutation.apply(modifiedContent);
-      if (newContent !== modifiedContent) {
-        modifiedContent = newContent;
-        changes.push(mutation.description);
-      }
-    }
-  }
-
-  // Last resort if no changes could be made
-  if (changes.length === 0) {
-    changes.push("No automatic changes could be applied - file may need manual review");
-  }
-
-  return { content: modifiedContent, changes, symptoms: generateFallbackSymptoms(changes) };
-}
-
