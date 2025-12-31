@@ -5,28 +5,24 @@ import { BugType, BUG_TYPES } from "./bug-types";
 type StressLevel = "low" | "medium" | "high";
 
 interface StressConfig {
-  bugCountMin: number;
-  bugCountMax: number;
+  bugCount: number;
   subtlety: string;
   description: string;
 }
 
 const STRESS_CONFIGS: Record<StressLevel, StressConfig> = {
   low: {
-    bugCountMin: 1,
-    bugCountMax: 2,
+    bugCount: 2,
     subtlety: "relatively obvious",
     description: "The bugs should be somewhat noticeable - things like obvious operator mistakes, clear logic inversions, or simple typos in variable names. A junior developer should be able to spot them with careful review. Keep the code structure simple and don't add extra abstraction layers.",
   },
   medium: {
-    bugCountMin: 2,
-    bugCountMax: 3,
+    bugCount: 4,
     subtlety: "subtle but findable",
     description: "The bugs should require careful code review to find - off-by-one errors, missing awaits that cause Promise objects to be used as values, edge case failures. A mid-level developer should need to trace through the logic to find them. You SHOULD add 1-2 'data layer' helper functions that data passes through before being used - mimicking technical debt where someone added abstraction layers 'for future flexibility'. The bug can be hidden in these intermediate functions. All bugs must be deterministic and reproducible.",
   },
   high: {
-    bugCountMin: 2,
-    bugCountMax: 3,
+    bugCount: 6,
     subtlety: "deviously subtle",
     description: "The bugs should be very hard to find but ALWAYS reproducible - subtle state mutations, edge cases with specific inputs, cascading errors where one bug masks another. Even senior developers should need debugging tools and careful analysis. You MUST add multiple 'data layer' functions that pipe data through 2-4 transformation steps before it reaches its destination - realistic 'legacy code' technical debt where data flows through normalizers, formatters, validators, mappers, etc. Hide bugs deep in these pipelines where a developer must trace the entire data flow to find them. This should mimic real legacy codebases with accumulated abstractions. IMPORTANT: All bugs must be 100% deterministic - no race conditions or timing-dependent issues.",
   },
@@ -156,7 +152,7 @@ export async function introduceAIStress(
   // Calculate bug count
   const bugCount = targetBugCount !== undefined 
     ? targetBugCount 
-    : Math.floor(Math.random() * (config.bugCountMax - config.bugCountMin + 1)) + config.bugCountMin;
+    : config.bugCount;
   
   // RANDOMIZE: Select specific bug types before calling AI
   const selectedBugs = selectRandomBugTypes(bugCount, stressLevel);
