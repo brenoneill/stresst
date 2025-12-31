@@ -693,6 +693,16 @@ ${examples}
 }
 
 /**
+ * Custom error class for AI stress generation failures.
+ */
+export class AIStressError extends Error {
+  constructor(message: string, public readonly cause?: unknown) {
+    super(message);
+    this.name = "AIStressError";
+  }
+}
+
+/**
  * Uses AI to introduce subtle but nasty breaking changes to code.
  * The changes should be realistic bugs that require debugging skills to find and fix.
  * 
@@ -704,6 +714,7 @@ ${examples}
  * @param stressLevel - Stress level: "low", "medium", or "high"
  * @param targetBugCount - Optional specific number of bugs to introduce (overrides stress level bug count)
  * @returns Modified content with AI-generated breaking changes, descriptions, and user-facing symptoms
+ * @throws AIStressError if AI is unavailable or fails to generate bugs
  */
 export async function introduceAIStress(
   content: string,
@@ -718,9 +729,11 @@ export async function introduceAIStress(
   try {
     const anthropicModule = await import("@ai-sdk/anthropic");
     anthropic = anthropicModule.anthropic;
-  } catch {
-    console.warn("@ai-sdk/anthropic not installed, using fallback stress");
-    return fallbackStress(content, filename, context, stressLevel);
+  } catch (error) {
+    throw new AIStressError(
+      "AI SDK not available. Please ensure @ai-sdk/anthropic is installed and ANTHROPIC_API_KEY is set.",
+      error
+    );
   }
 
   const config = STRESS_CONFIGS[stressLevel];
@@ -797,13 +810,13 @@ The modifiedCode must be the COMPLETE file content. Do not truncate or summarize
     // Parse the response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error("Failed to parse AI response");
+      throw new AIStressError("Failed to parse AI response - no JSON found in output");
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
     
     if (!parsed.modifiedCode || !parsed.changes) {
-      throw new Error("Invalid AI response structure");
+      throw new AIStressError("Invalid AI response structure - missing modifiedCode or changes");
     }
 
     return {
@@ -812,9 +825,13 @@ The modifiedCode must be the COMPLETE file content. Do not truncate or summarize
       symptoms: parsed.symptoms || selectedBugs.map(b => b.sampleSymptom),
     };
   } catch (error) {
-    console.error("AI stress generation failed:", error);
-    // Fallback to basic stress if AI fails
-    return fallbackStress(content, filename, context, stressLevel, targetBugCount);
+    if (error instanceof AIStressError) {
+      throw error;
+    }
+    throw new AIStressError(
+      "AI stress generation failed. Please check your API key and try again.",
+      error
+    );
   }
 }
 
