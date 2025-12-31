@@ -33,30 +33,17 @@ const STRESS_CONFIGS: Record<StressLevel, StressConfig> = {
  * Selects random bug types ensuring variety across categories.
  * Uses Fisher-Yates shuffle for true randomness.
  * 
+ * Any bug type can be selected regardless of stress level - difficulty comes from
+ * the number of bugs and how they're implemented (abstraction layers, helper functions, etc.).
+ * 
  * @param count - Number of bug types to select
- * @param stressLevel - Stress level affects which priorities are preferred
+ * @param _stressLevel - Stress level (unused, kept for API compatibility)
  * @returns Array of randomly selected bug types
  */
-function selectRandomBugTypes(count: number, stressLevel: StressLevel): BugType[] {
-  // Filter by priority based on stress level
-  let priorityFilter: BugType["priority"][];
-  switch (stressLevel) {
-    case "low":
-      priorityFilter = ["high"]; // Only obvious bugs for low stress
-      break;
-    case "medium":
-      priorityFilter = ["high", "medium"];
-      break;
-    case "high":
-      priorityFilter = ["high", "medium", "low"];
-      break;
-  }
-
-  // Get all applicable bugs
-  const applicableBugs = BUG_TYPES.filter(bug => priorityFilter.includes(bug.priority));
-  
+function selectRandomBugTypes(count: number, _stressLevel: StressLevel): BugType[] {
+  // Use all bug types - difficulty is determined by implementation complexity, not bug type
   // Shuffle using Fisher-Yates
-  const shuffled = [...applicableBugs];
+  const shuffled = [...BUG_TYPES];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
