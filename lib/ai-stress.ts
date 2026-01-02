@@ -474,12 +474,19 @@ Respond with ONLY a JSON object in this exact format (no markdown, no explanatio
 }
 
 IMPORTANT about "symptoms": Write these like bug reports from a QA tester who sees the UI, not the code:
-- Format: "[Location/Action]: [What went wrong]. Expected [X] but got [Y]."
+- Format: "[Specific Location]: [What went wrong]. Expected [X] but got [Y]."
+- EVERY symptom MUST start with a specific location (page name, component, section of the UI)
+- Location examples: "Home page:", "Filter bar on the Products page:", "User profile sidebar:", "Shopping cart modal:", "Search results in the header:"
 - Do NOT mention variable names, function names, or line numbers
 - Describe what the user SEES, not what the code does
 - Symptoms MUST describe CLEAR, VISIBLE failures that happen 100% of the time
-- Examples: "All prices show $0.00", "Last 2 items are missing", "App crashes with white screen", "Names appear backwards"
+- Good examples with locations:
+  - "Home page product grid: All prices show $0.00 instead of actual values"
+  - "Filter dropdown in the sidebar: Last 2 filter options are missing from the list"
+  - "User dashboard stats panel: App crashes with white screen when loading"
+  - "Navigation breadcrumbs: Names appear in reverse order"
 - DO NOT write symptoms like "app is slower" or "sometimes fails" - these are not clear enough
+- DO NOT write generic locations like "On the page" or "In the app" - be SPECIFIC about WHERE in the UI
 
 The modifiedCode must be the COMPLETE file content. Do not truncate or summarize.`;
 
@@ -571,16 +578,16 @@ The modifiedCode must be the COMPLETE file content. Do not truncate or summarize
  */
 function generateFallbackSymptoms(changes: string[]): string[] {
   const symptomTemplates = [
-    "On the main list page: The last 2 items are completely missing. We have 10 items but only 8 show up on screen.",
-    "In the search bar: The first letter of every search is being cut off. Typing 'Apple' searches for 'pple' instead.",
-    "On the cards/list view: Every single item shows the same ID number. All 50 items display 'ID: 1001' even though they should be unique.",
-    "In the user profile section: All names are showing as 'undefined'. The other fields load fine but names are blank.",
-    "After loading the page: App crashes with white screen. Console shows 'Cannot read property of null' error.",
-    "On the dashboard: All totals and prices show $0.00. We have items worth hundreds of dollars but everything displays as zero.",
-    "In the item grid: Half the items are completely blank. Every other card (items 2, 4, 6, 8...) shows as empty.",
-    "When viewing the list: Items that should be visible are hidden, and hidden items are showing. The display logic is completely inverted.",
-    "On the counter display: Shows '3 items' but there are clearly 5 items on screen. The count is always 2 less than actual.",
-    "In the text fields: The last few characters are cut off from every label. 'Description' shows as 'Descript', 'Username' shows as 'Userna'.",
+    "Home page product grid: The last 2 items are completely missing. We have 10 items but only 8 show up on screen.",
+    "Header search bar component: The first letter of every search is being cut off. Typing 'Apple' searches for 'pple' instead.",
+    "Products listing page cards: Every single item shows the same ID number. All 50 items display 'ID: 1001' even though they should be unique.",
+    "User profile sidebar panel: All names are showing as 'undefined'. The other fields load fine but names are blank.",
+    "Dashboard main content area: App crashes with white screen. Console shows 'Cannot read property of null' error.",
+    "Order summary in checkout page: All totals and prices show $0.00. We have items worth hundreds of dollars but everything displays as zero.",
+    "Category filter dropdown in sidebar: Half the options are completely blank. Every other filter (items 2, 4, 6, 8...) shows as empty.",
+    "Featured items carousel on home page: Items that should be visible are hidden, and hidden items are showing. The display logic is completely inverted.",
+    "Cart icon badge in navigation header: Shows '3 items' but there are clearly 5 items in cart. The count is always 2 less than actual.",
+    "Form labels in settings page: The last few characters are cut off from every label. 'Description' shows as 'Descript', 'Username' shows as 'Userna'.",
   ];
   
   // Pick random symptoms based on number of changes
