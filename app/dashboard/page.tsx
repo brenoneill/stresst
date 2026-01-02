@@ -1,5 +1,4 @@
 import { auth, signOut } from "@/auth";
-import { redirect } from "next/navigation";
 import { fetchUserRepos } from "@/lib/github";
 import { RepoBranchSelector } from "../components/RepoBranchSelector";
 import { Button } from "../components/inputs/Button";
@@ -11,14 +10,14 @@ import { LogoutIcon } from "../components/icons";
  */
 export default async function Dashboard() {
   const session = await auth();
+  
+  // Get access token with fallback for type safety
+  const accessToken = session?.accessToken ?? "";
 
-  // Type guard: ensure session and accessToken exist (middleware should guarantee this)
-  if (!session?.accessToken) {
-    redirect("/");
-  }
-
-  // Fetch repos for authenticated user
-  const repos = await fetchUserRepos(session.accessToken).catch(() => []);
+  // Fetch repos for authenticated user (returns empty array if no token)
+  const repos = accessToken 
+    ? await fetchUserRepos(accessToken).catch(() => [])
+    : [];
 
   return (
     <div className="relative flex min-h-screen overflow-hidden bg-[#0d1117]">
@@ -36,13 +35,13 @@ export default async function Dashboard() {
 
       {/* Main split layout */}
       <div className="relative flex w-full">
-        <RepoBranchSelector repos={repos} accessToken={session.accessToken} />
+        <RepoBranchSelector repos={repos} accessToken={accessToken} />
       </div>
 
       {/* Header with user info and logout */}
       <div className="absolute right-6 top-6 z-20 flex items-center gap-4">
         <span className="text-sm text-[#8b949e]">
-          <span className="font-semibold text-white">{session.user?.name ?? "User"}</span>
+          <span className="font-semibold text-white">{session?.user?.name ?? "User"}</span>
         </span>
         <form
           action={async () => {
