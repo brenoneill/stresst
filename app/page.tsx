@@ -2,6 +2,7 @@ import { signIn } from "@/auth";
 import { Button } from "./components/inputs/Button";
 import { ScrollHeader } from "./components/ScrollHeader";
 import { FixedLoginButton } from "./components/FixedLoginButton";
+import { PublicReposPreview } from "./components/repos/PublicReposPreview";
 import {
   GitHubIcon,
   LightningIcon,
@@ -278,6 +279,14 @@ export default async function Home() {
                 One-click fork available after sign in
               </div>
             </div>
+          </div>
+
+          {/* Practice Repos Preview */}
+          <div className="mt-8">
+            <h4 className="mb-4 text-sm font-medium text-gh-text-muted">
+              Available Practice Repositories
+            </h4>
+            <PublicReposPreview />
           </div>
         </section>
 
