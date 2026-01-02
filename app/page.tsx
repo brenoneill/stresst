@@ -181,15 +181,28 @@ export default async function Home() {
           </div>
 
           {/* Bug report screenshot */}
-          <div className="mt-8 overflow-hidden rounded-xl border border-gh-border">
-            <div className="border-b border-gh-border bg-gh-canvas-subtle px-4 py-2">
-              <span className="text-xs font-medium text-gh-text-muted">Receive realistic bug reports describing symptoms — not solutions</span>
+          <div className="group relative mt-8">
+            {/* Glow effect */}
+            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-gh-success/20 via-gh-accent/20 to-gh-danger/20 opacity-50 blur-lg transition-opacity group-hover:opacity-75" />
+            
+            <div className="relative overflow-hidden rounded-xl border border-gh-border bg-gh-canvas-inset">
+              {/* Window header with dots */}
+              <div className="flex items-center gap-3 border-b border-gh-border bg-gh-canvas-subtle px-4 py-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+                  <div className="h-3 w-3 rounded-full bg-[#febc2e]" />
+                  <div className="h-3 w-3 rounded-full bg-[#28c840]" />
+                </div>
+                <span className="text-xs font-medium text-gh-text-muted">
+                  Receive realistic bug reports describing symptoms — not solutions
+                </span>
+              </div>
+              <img
+                src="/screenshots/screenshot-bug-report-showing-min.png"
+                alt="Screenshot showing bug report notifications with realistic user complaints"
+                className="w-full"
+              />
             </div>
-            <img
-              src="/screenshots/screenshot-bug-report-showing-min.png"
-              alt="Screenshot showing bug report notifications with realistic user complaints"
-              className="w-full"
-            />
           </div>
         </section>
 
@@ -252,15 +265,28 @@ export default async function Home() {
           </div>
 
           {/* Select commit screenshot */}
-          <div className="mt-8 overflow-hidden rounded-xl border border-gh-border">
-            <div className="border-b border-gh-border bg-gh-canvas-subtle px-4 py-2">
-              <span className="text-xs font-medium text-gh-text-muted">Select a commit and configure stress level</span>
+          <div className="group relative mt-8">
+            {/* Glow effect */}
+            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-gh-accent/20 via-gh-success/20 to-gh-accent/20 opacity-50 blur-lg transition-opacity group-hover:opacity-75" />
+            
+            <div className="relative overflow-hidden rounded-xl border border-gh-border bg-gh-canvas-inset">
+              {/* Window header with dots */}
+              <div className="flex items-center gap-3 border-b border-gh-border bg-gh-canvas-subtle px-4 py-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+                  <div className="h-3 w-3 rounded-full bg-[#febc2e]" />
+                  <div className="h-3 w-3 rounded-full bg-[#28c840]" />
+                </div>
+                <span className="text-xs font-medium text-gh-text-muted">
+                  Select a commit and configure stress level
+                </span>
+              </div>
+              <img
+                src="/screenshots/screenshot-select-commit-to-stress-min.png"
+                alt="Screenshot showing the commit selection interface with stress level configuration"
+                className="w-full"
+              />
             </div>
-            <img
-              src="/screenshots/screenshot-select-commit-to-stress-min.png"
-              alt="Screenshot showing the commit selection interface with stress level configuration"
-              className="w-full"
-            />
           </div>
 
           {/* Stress Process Details */}
