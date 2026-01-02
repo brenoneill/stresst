@@ -179,6 +179,18 @@ export default async function Home() {
               </p>
             </div>
           </div>
+
+          {/* Bug report screenshot */}
+          <div className="mt-8 overflow-hidden rounded-xl border border-gh-border">
+            <div className="border-b border-gh-border bg-gh-canvas-subtle px-4 py-2">
+              <span className="text-xs font-medium text-gh-text-muted">Receive realistic bug reports describing symptoms — not solutions</span>
+            </div>
+            <img
+              src="/screenshots/screenshot-bug-report-showing-min.png"
+              alt="Screenshot showing bug report notifications with realistic user complaints"
+              className="w-full"
+            />
+          </div>
         </section>
 
         {/* Why Section */}
@@ -239,8 +251,20 @@ export default async function Home() {
             ))}
           </div>
 
+          {/* Select commit screenshot */}
+          <div className="mt-8 overflow-hidden rounded-xl border border-gh-border">
+            <div className="border-b border-gh-border bg-gh-canvas-subtle px-4 py-2">
+              <span className="text-xs font-medium text-gh-text-muted">Select a commit and configure stress level</span>
+            </div>
+            <img
+              src="/screenshots/screenshot-select-commit-to-stress-min.png"
+              alt="Screenshot showing the commit selection interface with stress level configuration"
+              className="w-full"
+            />
+          </div>
+
           {/* Stress Process Details */}
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
             <div className="flex flex-col justify-center">
               <h4 className="mb-3 text-lg font-semibold text-white">The Stress Process</h4>
               <p className="text-sm leading-relaxed text-gh-text-muted">
