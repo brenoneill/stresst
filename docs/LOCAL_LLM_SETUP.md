@@ -95,7 +95,7 @@ Add to your `.env.local`:
 AI_PROVIDER=ollama
 
 # Model to use (must be pulled first)
-OLLAMA_MODEL=llama3
+AI_MODEL=llama3
 
 # Optional: Custom Ollama URL (defaults to http://localhost:11434/v1)
 # OLLAMA_BASE_URL=http://localhost:11434/v1
@@ -210,7 +210,7 @@ OPENAI_COMPATIBLE_API_KEY=your-api-key
 |----------|----------|---------|-------------|
 | `AI_PROVIDER` | No | `anthropic` | Provider: `anthropic`, `ollama`, or `openai-compatible` |
 | `OLLAMA_BASE_URL` | No | `http://localhost:11434/v1` | Ollama server URL |
-| `OLLAMA_MODEL` | Yes* | - | Model name for Ollama (*required if using Ollama) |
+| `AI_MODEL` | No | `llama3` (Ollama) / `claude-3-5-sonnet-20241022` (Anthropic) | Model name for any provider |
 | `OPENAI_COMPATIBLE_BASE_URL` | Yes* | - | Server URL (*required if using openai-compatible) |
 | `OPENAI_COMPATIBLE_MODEL` | No | `default` | Model name for OpenAI-compatible servers |
 | `OPENAI_COMPATIBLE_API_KEY` | No | `not-needed` | API key if required by server |

@@ -110,7 +110,7 @@ npm install @ai-sdk/openai
 
 # Set environment variables
 export AI_PROVIDER=ollama
-export OLLAMA_MODEL=llama3
+export AI_MODEL=llama3
 ```
 
 **📖 See [docs/LOCAL_LLM_SETUP.md](docs/LOCAL_LLM_SETUP.md) for detailed setup instructions.**

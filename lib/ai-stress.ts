@@ -21,7 +21,7 @@ function resolveAIProvider(): AIProvider {
   if (explicitProvider === "anthropic") return "anthropic";
   
   // Auto-detect based on available configuration
-  if (process.env.OLLAMA_MODEL) return "ollama";
+  if (process.env.AI_PROVIDER === "ollama" || (process.env.AI_MODEL && process.env.AI_PROVIDER !== "anthropic" && !process.env.ANTHROPIC_API_KEY)) return "ollama";
   if (process.env.OPENAI_COMPATIBLE_BASE_URL) return "openai-compatible";
   
   // Default to Anthropic
@@ -54,7 +54,7 @@ async function createLanguageModel(): Promise<LanguageModel> {
       }
       
       const baseURL = process.env.OLLAMA_BASE_URL || "http://localhost:11434/v1";
-      const model = process.env.OLLAMA_MODEL || "llama3";
+      const model = process.env.AI_MODEL || "llama3";
       
       console.log(`Ollama config: baseURL=${baseURL}, model=${model}`);
       
