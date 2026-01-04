@@ -693,7 +693,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
         )}
 
         {/* Public Repos Section - only show when no branch selected */}
-        {!selectedBranch && <PublicReposList onForkSuccess={handleForkSuccess} />}
+        {!selectedBranch && <PublicReposList onForkSuccess={handleForkSuccess} userRepos={repos} />}
 
         {/* Error Display */}
         {error && <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</div>}

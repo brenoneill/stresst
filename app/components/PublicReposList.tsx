@@ -9,6 +9,8 @@ import { RepoCard } from "@/app/components/repos/RepoCard";
 interface PublicReposListProps {
   /** Callback when a repo is successfully forked */
   onForkSuccess?: (forkedRepo: GitHubRepo) => void;
+  /** User's existing repos to check for already forked repos */
+  userRepos?: GitHubRepo[];
 }
 
 /**
@@ -16,8 +18,9 @@ interface PublicReposListProps {
  * Fetches repos from the stresst GitHub account.
  *
  * @param onForkSuccess - Callback triggered when a repo is successfully forked
+ * @param userRepos - User's existing repos to determine if a repo is already forked
  */
-export function PublicReposList({ onForkSuccess }: PublicReposListProps) {
+export function PublicReposList({ onForkSuccess, userRepos = [] }: PublicReposListProps) {
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,6 +117,7 @@ export function PublicReposList({ onForkSuccess }: PublicReposListProps) {
         {repos.filter((repo) => repo.name !== "stresst").map((repo) => {
           const isForking = forkingRepo === repo.full_name;
           const repoUrl = `https://github.com/${repo.full_name}`;
+          const isAlreadyForked = userRepos.some((userRepo) => userRepo.name === repo.name);
           
           return (
             <RepoCard
@@ -137,15 +141,15 @@ export function PublicReposList({ onForkSuccess }: PublicReposListProps) {
                   <Button
                     size="sm"
                     onClick={() => handleFork(repo)}
-                    disabled={isForking || forkingRepo !== null}
-                    title="Fork to your account"
+                    disabled={isForking || forkingRepo !== null || isAlreadyForked}
+                    title={isAlreadyForked ? "Already forked to your account" : "Fork to your account"}
                   >
                     {isForking ? (
                       <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                     ) : (
                       <ForkIcon className="h-3.5 w-3.5" />
                     )}
-                    Fork
+                    {isAlreadyForked ? "Forked" : "Fork"}
                   </Button>
                 </>
               }
