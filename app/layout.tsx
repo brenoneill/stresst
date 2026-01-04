@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import { NotesProvider } from "@/app/context/NotesContext";
 
@@ -31,6 +32,7 @@ export default function RootLayout({
         <NotesProvider>
           {children}
         </NotesProvider>
+        <Analytics />
       </body>
     </html>
   );
