@@ -210,7 +210,20 @@ export async function POST(request: NextRequest) {
           results.push({ file: filePath, success: true, changes, symptoms });
           allSymptoms.push(...symptoms);
         } else {
-          results.push({ file: filePath, success: false, error: "No changes made" });
+          // Provide detailed error message for debugging
+          const errorDetails: string[] = [];
+          if (changes.length === 0) {
+            errorDetails.push("AI returned 0 changes");
+          }
+          if (modifiedContent === decodedContent) {
+            errorDetails.push("AI returned unchanged content");
+          }
+          console.error(`Stress failed for ${filePath}: ${errorDetails.join(", ")}`);
+          results.push({ 
+            file: filePath, 
+            success: false, 
+            error: `No changes made (${errorDetails.join(", ")}). This may indicate an AI configuration issue.` 
+          });
         }
       } catch (error) {
         results.push({
@@ -222,6 +235,12 @@ export async function POST(request: NextRequest) {
     }
 
     const successCount = results.filter((r) => r.success).length;
+    const failedResults = results.filter((r) => !r.success && r.error);
+
+    // Log failures for debugging
+    if (failedResults.length > 0) {
+      console.error("Failed stress results:", failedResults.map(r => ({ file: r.file, error: r.error })));
+    }
 
     // Deduplicate symptoms
     const uniqueSymptoms = [...new Set(allSymptoms)];

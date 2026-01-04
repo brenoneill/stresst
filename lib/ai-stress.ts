@@ -132,6 +132,32 @@ async function createLanguageModel(): Promise<LanguageModel> {
     
     case "anthropic":
     default: {
+      // Validate API key is set before attempting to use Anthropic
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) {
+        console.error("ANTHROPIC_API_KEY environment variable is not set.");
+        console.error("Available env vars with 'ANTHROP' or 'API':", 
+          Object.keys(process.env).filter(k => 
+            k.toLowerCase().includes('anthrop') || k.toLowerCase().includes('api_key')
+          )
+        );
+        throw new AIStressError(
+          "ANTHROPIC_API_KEY environment variable is not set. " +
+          "Please add it to your .env.local file. " +
+          "Check for typos - the variable must be named exactly 'ANTHROPIC_API_KEY'."
+        );
+      }
+      
+      // Check for common key format issues
+      if (apiKey.length < 20) {
+        throw new AIStressError(
+          "ANTHROPIC_API_KEY appears to be invalid (too short). " +
+          "Please check your API key is correctly copied from the Anthropic console."
+        );
+      }
+      
+      console.log(`Anthropic API key found (${apiKey.length} chars, starts with: ${apiKey.substring(0, 7)}...)`);
+      
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let anthropic: any;
       try {
@@ -139,12 +165,12 @@ async function createLanguageModel(): Promise<LanguageModel> {
         anthropic = anthropicModule.anthropic;
       } catch (error) {
         throw new AIStressError(
-          "AI SDK not available. Please ensure @ai-sdk/anthropic is installed and ANTHROPIC_API_KEY is set.",
+          "AI SDK not available. Please ensure @ai-sdk/anthropic is installed.",
           error
         );
       }
       
-      return anthropic("claude-sonnet-4-20250514");
+      return anthropic("claude-opus-4-20250514");
     }
   }
 }
@@ -550,6 +576,21 @@ The modifiedCode must be the COMPLETE file content. Do not truncate or summarize
     }
 
     console.log(`Successfully parsed AI response with ${parsed.changes.length} changes`);
+    
+    // Log comparison info for debugging
+    const originalLength = content.length;
+    const modifiedLength = parsed.modifiedCode?.length || 0;
+    const contentChanged = parsed.modifiedCode !== content;
+    console.log(`Content comparison: original=${originalLength} chars, modified=${modifiedLength} chars, changed=${contentChanged}`);
+    
+    if (!contentChanged) {
+      console.warn("WARNING: AI returned content identical to original! The file will not be updated.");
+      console.warn("This could indicate the AI failed to modify the code or echoed it back unchanged.");
+    }
+    
+    if (parsed.changes.length === 0) {
+      console.warn("WARNING: AI returned 0 changes! No bugs were introduced.");
+    }
 
     return {
       content: parsed.modifiedCode,
