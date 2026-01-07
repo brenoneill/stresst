@@ -16,7 +16,7 @@ import { CreateBranchForm } from "@/app/components/stress/CreateBranchForm";
 import { BranchSuccessCard } from "@/app/components/stress/BranchSuccessCard";
 import { ScorePanel } from "@/app/components/stress/ScorePanel";
 import { PublicReposList } from "@/app/components/PublicReposList";
-import { GitHubIcon, CloseIcon, TrashIcon, DocumentIcon, CheckIcon, CopyIcon, LightningIcon, ExternalLinkIcon, TrophyIcon } from "@/app/components/icons";
+import { GitHubIcon, CloseIcon, TrashIcon, DocumentIcon, CheckIcon, CopyIcon, ExternalLinkIcon, TrophyIcon, BuggrIcon } from "@/app/components/icons";
 import { LOADING_STEPS } from "@/app/components/stress/loading-steps";
 
 interface RepoBranchSelectorProps {
@@ -613,7 +613,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-gh-border bg-gh-canvas-subtle">
-              <GitHubIcon className="h-5 w-5 text-white" />
+              <BuggrIcon className="h-5 w-5 text-white" />
             </div>
             <h1 className="font-mono text-xl font-bold text-white">Buggr</h1>
           </div>
@@ -893,7 +893,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
                     setShowCreateBranch(true);
                     setTimestamp(generateTimestamp());
                   }}>
-                  <LightningIcon className="h-4 w-4" />
+                  <BuggrIcon className="h-4 w-4" />
                   Bugger up this commit
                 </Button>
               )}

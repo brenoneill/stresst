@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { GitHubCommit, StressMetadata } from "@/lib/github";
 import { Button } from "@/app/components/inputs/Button";
-import { TrophyIcon, CloseIcon } from "@/app/components/icons";
+import { TrophyIcon, CloseIcon, BuggrIcon } from "@/app/components/icons";
 import {
   calculateScoreRating,
   DIFFICULTY_CONFIG,
@@ -113,7 +113,7 @@ export function ScorePanel({
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <TrophyIcon className="h-4 w-4 text-amber-400" />
+              <BuggrIcon className="h-4 w-4 text-gh-success" />
               <span className="text-xs font-semibold tracking-wide text-white uppercase">Buggr</span>
             </div>
             {repoFullName && (
