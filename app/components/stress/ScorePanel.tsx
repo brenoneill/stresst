@@ -5,7 +5,7 @@ import type { GitHubCommit, StressMetadata } from "@/lib/github";
 import type { AnalysisFeedback, AnalyzeResponse } from "@/app/api/github/analyze/route";
 import { Button } from "@/app/components/inputs/Button";
 import { LoadingProgress, LoadingStep } from "@/app/components/stress/LoadingProgress";
-import { CloseIcon, BuggrIcon, SparklesIcon, CheckIcon, InfoIcon, LightbulbIcon } from "@/app/components/icons";
+import { CloseIcon, BuggrIcon, SparklesIcon, CheckIcon, InfoIcon, LightbulbIcon, TrophyIcon } from "@/app/components/icons";
 import {
   calculateScoreRating,
   DIFFICULTY_CONFIG,
@@ -254,6 +254,7 @@ export function ScorePanel({
   const [analysisStep, setAnalysisStep] = useState(0);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeResponse | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [showAnalysisView, setShowAnalysisView] = useState(true);
   
   // Ref to track step progression intervals
   const stepIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -413,46 +414,76 @@ export function ScorePanel({
 
   return (
     <div className={`flex h-full flex-col gap-4 overflow-y-auto pt-6 transition-all duration-500 ease-out ${isVisible ? "opacity-100" : "opacity-0"}`}>
-      {/* Score Card - slim when analysis shown, full otherwise */}
-      {analysisResult ? (
+      {/* View Toggle - shown when analysis results exist */}
+      {analysisResult && (
+        <div className="flex items-center justify-center gap-1 p-1 rounded-lg bg-gh-canvas-subtle">
+          <button
+            onClick={() => setShowAnalysisView(true)}
+            className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              showAnalysisView
+                ? "bg-gh-canvas-default text-white shadow-sm"
+                : "text-gh-text-muted hover:text-white"
+            }`}
+          >
+            <SparklesIcon className="inline-block h-3 w-3 mr-1.5" />
+            Analysis
+          </button>
+          <button
+            onClick={() => setShowAnalysisView(false)}
+            className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              !showAnalysisView
+                ? "bg-gh-canvas-default text-white shadow-sm"
+                : "text-gh-text-muted hover:text-white"
+            }`}
+          >
+            <TrophyIcon className="inline-block h-3 w-3 mr-1.5" />
+            Score
+          </button>
+        </div>
+      )}
+
+      {/* Score Card - slim when showing analysis, full otherwise */}
+      {analysisResult && showAnalysisView ? (
         <SlimScoreCard {...scoreCardProps} />
       ) : (
         <FullScoreCard {...scoreCardProps} />
       )}
 
-      {/* Analyze Button or Loading Progress */}
-      <div 
-        className={`transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-        style={{ transitionDelay: "900ms" }}
-      >
-        {analyzing ? (
-          <LoadingProgress
-            steps={ANALYSIS_STEPS}
-            currentStep={analysisStep}
-            title="Analyzing your code"
-            subtitle="AI is reviewing your fix..."
-          />
-        ) : !analysisResult ? (
-          <Button 
-            variant="primary" 
-            className="w-full" 
-            onClick={handleAnalyzeCode}
-            disabled={!stressMetadata}
-          >
-            <SparklesIcon className="h-4 w-4" />
-            Analyze Code
-          </Button>
-        ) : null}
-      </div>
+      {/* Analyze Button or Loading Progress - only when no analysis yet */}
+      {!analysisResult && (
+        <div 
+          className={`transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          style={{ transitionDelay: "900ms" }}
+        >
+          {analyzing ? (
+            <LoadingProgress
+              steps={ANALYSIS_STEPS}
+              currentStep={analysisStep}
+              title="Analyzing your code"
+              subtitle="AI is reviewing your fix..."
+            />
+          ) : (
+            <Button 
+              variant="primary" 
+              className="w-full" 
+              onClick={handleAnalyzeCode}
+              disabled={!stressMetadata}
+            >
+              <SparklesIcon className="h-4 w-4" />
+              Analyze Code
+            </Button>
+          )}
+        </div>
+      )}
 
-      {/* Analysis Results */}
+      {/* Analysis Results - shown when analysis exists and analysis view is active */}
       {analysisError && (
         <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
           <p className="text-sm text-red-400">{analysisError}</p>
         </div>
       )}
 
-      {analysisResult && (
+      {analysisResult && showAnalysisView && (
         <div 
           className={`space-y-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
@@ -501,8 +532,8 @@ export function ScorePanel({
         </div>
       )}
 
-      {/* Timeline - Compact (only shown when no analysis) */}
-      {!analysisResult && (
+      {/* Timeline - shown when no analysis OR when score view is active */}
+      {(!analysisResult || !showAnalysisView) && (
       <div 
         className={`space-y-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         style={{ transitionDelay: "1000ms" }}
