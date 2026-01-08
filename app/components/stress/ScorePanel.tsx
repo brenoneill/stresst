@@ -1,14 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { GitHubCommit, StressMetadata } from "@/lib/github";
 import type { AnalysisFeedback, AnalyzeResponse } from "@/app/api/github/analyze/route";
 import { Button } from "@/app/components/inputs/Button";
+import { LoadingProgress, LoadingStep } from "@/app/components/stress/LoadingProgress";
 import { CloseIcon, BuggrIcon, SparklesIcon, CheckIcon, InfoIcon, LightbulbIcon } from "@/app/components/icons";
 import {
   calculateScoreRating,
   DIFFICULTY_CONFIG,
 } from "@/lib/score-config";
+
+/** Steps shown during code analysis */
+const ANALYSIS_STEPS: LoadingStep[] = [
+  { label: "Fetching commit changes", timeEstimate: "~2s" },
+  { label: "Reading your code diff", timeEstimate: "~1s" },
+  { label: "Checking for reasoning.txt", timeEstimate: "~1s" },
+  { label: "AI analyzing your fix", timeEstimate: "~5s" },
+  { label: "Generating feedback", timeEstimate: "~2s" },
+];
 
 interface ScorePanelProps {
   /** The commit where debugging started (contains "start" in message) */
@@ -79,14 +89,27 @@ export function ScorePanel({
 }: ScorePanelProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisStep, setAnalysisStep] = useState(0);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeResponse | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  
+  // Ref to track step progression intervals
+  const stepIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Trigger entrance animation on mount
   useEffect(() => {
     // Small delay to ensure the component is mounted before animating
     const timer = setTimeout(() => setIsVisible(true), 50);
     return () => clearTimeout(timer);
+  }, []);
+  
+  // Cleanup step interval on unmount
+  useEffect(() => {
+    return () => {
+      if (stepIntervalRef.current) {
+        clearInterval(stepIntervalRef.current);
+      }
+    };
   }, []);
 
   const { formatted: timeDifference, ms: timeMs } = calculateTimeDifference(
@@ -109,6 +132,7 @@ export function ScorePanel({
   /**
    * Handles the analyze code action.
    * Fetches the complete commit's diff and analyzes it for common issues.
+   * Shows step-by-step progress during the analysis.
    */
   const handleAnalyzeCode = async () => {
     if (!stressMetadata) {
@@ -118,6 +142,19 @@ export function ScorePanel({
 
     setAnalyzing(true);
     setAnalysisError(null);
+    setAnalysisStep(1);
+    
+    // Progress through steps automatically
+    // Steps 1-3 are quick (fetching/reading), step 4 (AI) takes longer
+    const stepTimings = [1500, 1000, 800, 4000, 2000]; // ms per step
+    let currentStep = 1;
+    
+    stepIntervalRef.current = setInterval(() => {
+      currentStep++;
+      if (currentStep <= ANALYSIS_STEPS.length) {
+        setAnalysisStep(currentStep);
+      }
+    }, stepTimings[currentStep - 1] || 1500);
 
     try {
       const response = await fetch("/api/github/analyze", {
@@ -136,12 +173,25 @@ export function ScorePanel({
       }
 
       const result: AnalyzeResponse = await response.json();
+      
+      // Complete all steps before showing result
+      setAnalysisStep(ANALYSIS_STEPS.length);
+      
+      // Small delay to show completion before transitioning
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      
       setAnalysisResult(result);
     } catch (error) {
       console.error("Error analyzing code:", error);
       setAnalysisError("Failed to analyze code. Please try again.");
     } finally {
+      // Clear the interval
+      if (stepIntervalRef.current) {
+        clearInterval(stepIntervalRef.current);
+        stepIntervalRef.current = null;
+      }
       setAnalyzing(false);
+      setAnalysisStep(0);
     }
   };
 
@@ -266,29 +316,29 @@ export function ScorePanel({
         </div>
       </div>
 
-      {/* Analyze Button */}
+      {/* Analyze Button or Loading Progress */}
       <div 
         className={`transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         style={{ transitionDelay: "900ms" }}
       >
-        <Button 
-          variant="primary" 
-          className="w-full" 
-          onClick={handleAnalyzeCode}
-          disabled={analyzing || !stressMetadata}
-        >
-          {analyzing ? (
-            <>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-              Analyzing...
-            </>
-          ) : (
-            <>
-              <SparklesIcon className="h-4 w-4" />
-              Analyze Code
-            </>
-          )}
-        </Button>
+        {analyzing ? (
+          <LoadingProgress
+            steps={ANALYSIS_STEPS}
+            currentStep={analysisStep}
+            title="Analyzing your code"
+            subtitle="AI is reviewing your fix..."
+          />
+        ) : !analysisResult ? (
+          <Button 
+            variant="primary" 
+            className="w-full" 
+            onClick={handleAnalyzeCode}
+            disabled={!stressMetadata}
+          >
+            <SparklesIcon className="h-4 w-4" />
+            Analyze Code
+          </Button>
+        ) : null}
       </div>
 
       {/* Analysis Results */}
