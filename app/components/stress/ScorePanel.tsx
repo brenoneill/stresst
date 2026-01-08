@@ -428,6 +428,7 @@ export function ScorePanel({
             <SparklesIcon className="inline-block h-3 w-3 mr-1.5" />
             Analysis
           </button>
+          <div className="w-px h-5 bg-gh-border" />
           <button
             onClick={() => setShowAnalysisView(false)}
             className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
