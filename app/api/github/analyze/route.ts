@@ -158,20 +158,44 @@ async function createLanguageModel(): Promise<LanguageModel> {
 }
 
 /**
+ * Extracts user reasoning from a reasoning.txt file patch.
+ * Looks for added lines (starting with +) to get the user's comments.
+ * 
+ * @param patch - The diff patch for reasoning.txt
+ * @returns The user's reasoning text, or null if not found
+ */
+function extractUserReasoning(patch: string): string | null {
+  if (!patch) return null;
+  
+  // Extract added lines (lines starting with + but not +++)
+  const addedLines = patch
+    .split("\n")
+    .filter((line) => line.startsWith("+") && !line.startsWith("+++"))
+    .map((line) => line.substring(1)) // Remove the + prefix
+    .join("\n")
+    .trim();
+  
+  return addedLines.length > 0 ? addedLines : null;
+}
+
+/**
  * Uses AI to analyze the user's code fix and provide detailed feedback.
  * 
  * @param patches - Array of file patches (diffs) from the commit
  * @param metadata - Optional buggr metadata describing what bugs were introduced
+ * @param userReasoning - Optional user-provided reasoning from reasoning.txt
  * @returns Analysis response with feedback, summary, and isPerfect flag
  */
 async function analyzeWithAI(
   patches: { filename: string; patch: string; status: string }[],
-  metadata: StressMetadata | null
+  metadata: StressMetadata | null,
+  userReasoning: string | null
 ): Promise<AnalyzeResponse> {
   const model = await createLanguageModel();
   
-  // Format the patches for the prompt
-  const patchesText = patches
+  // Format the patches for the prompt (excluding reasoning.txt from code review)
+  const codePatchesText = patches
+    .filter((p) => !p.filename.toLowerCase().includes("reasoning.txt"))
     .map((p) => `FILE: ${p.filename} (${p.status})\n\`\`\`diff\n${p.patch || "No changes"}\n\`\`\``)
     .join("\n\n");
   
@@ -192,7 +216,28 @@ ${metadata.changes.map((c, i) => `${i + 1}. ${c}`).join("\n")}
 ### Symptoms the bugs caused:
 ${metadata.symptoms.map((s, i) => `${i + 1}. ${s}`).join("\n")}
 
-Use this context to evaluate if the user properly fixed ALL the bugs and cleaned up their code.
+NOTE: Sometimes the AI-generated bugs don't actually cause the described symptoms, or the user found different issues. Consider the user's reasoning if provided.
+`;
+  }
+
+  // Build user reasoning section if provided
+  let userReasoningContext = "";
+  if (userReasoning) {
+    userReasoningContext = `
+## USER'S REASONING & NOTES
+
+The user has provided their own reasoning about this debugging session. READ THIS CAREFULLY and acknowledge their points:
+
+"""
+${userReasoning}
+"""
+
+IMPORTANT: 
+- If the user says the described bugs didn't actually cause issues, acknowledge this and adjust your feedback accordingly.
+- If the user found different problems than expected, validate their findings.
+- If the user asks questions, answer them helpfully.
+- If the user provides explanations for their approach, acknowledge and respond to them.
+- Be conversational and directly address what they wrote.
 `;
   }
   
@@ -200,12 +245,14 @@ Use this context to evaluate if the user properly fixed ALL the bugs and cleaned
 1. Evaluate if they correctly fixed the bugs
 2. Point out any issues with their fix (leftover code, incomplete fixes, etc.)
 3. Provide helpful tips on better approaches when applicable
+4. If the user provided reasoning, acknowledge and respond to their points directly
 
 ${bugContext}
+${userReasoningContext}
 
 ## THE USER'S FIX (diff format: + = added lines, - = removed lines)
 
-${patchesText}
+${codePatchesText}
 
 ## YOUR ANALYSIS
 
@@ -217,6 +264,9 @@ IMPORTANT GUIDELINES:
 - If their fix works but there's a cleaner/better way, explain it as a "tip" with the improvement.
 - Check if they addressed all the bugged files (if metadata provided).
 - Look for common issues: pass-through functions, commented-out code, debug statements left in.
+- If the user provided reasoning, ALWAYS acknowledge it in your feedback and respond thoughtfully.
+- If the user says the expected bugs weren't actually breaking, validate this and praise their investigative work.
+- Be conversational when responding to user notes - treat it like a code review dialogue.
 
 Respond with ONLY a JSON object in this exact format (no markdown, no explanation):
 {
@@ -236,7 +286,7 @@ Respond with ONLY a JSON object in this exact format (no markdown, no explanatio
 FEEDBACK TYPES:
 - "success": Things the user did well (e.g., "Correctly fixed the comparison operator")
 - "warning": Issues that should be fixed (e.g., "Left a pass-through function that does nothing")
-- "info": Neutral observations (e.g., "This file had bugs that were addressed")
+- "info": Neutral observations or responses to user reasoning (e.g., "Good observation about the bug behavior")
 - "hint": Suggestions that aren't critical (e.g., "Consider removing commented-out code")
 - "tip": "This works, but here's a better way" suggestions with the "improvement" field explaining why
 
@@ -245,7 +295,9 @@ IMPORTANT:
 - Provide 2-6 feedback items (don't overwhelm the user)
 - isPerfect should be true only if there are no warnings or hints
 - Always include at least one piece of feedback
-- For tips, the "message" should acknowledge what works, and "improvement" should explain the better approach`;
+- For tips, the "message" should acknowledge what works, and "improvement" should explain the better approach
+- If user provided reasoning, include at least one feedback item that directly responds to what they wrote
+- If user notes that expected symptoms didn't occur, acknowledge this - AI bug generation isn't perfect!`;
 
   try {
     console.log("[Analyze] Sending to AI for analysis...");
@@ -349,8 +401,19 @@ export async function POST(request: NextRequest) {
       status: file.status,
     }));
     
+    // Check for reasoning.txt file and extract user's notes
+    const reasoningFile = patches.find(
+      (p) => p.filename.toLowerCase() === "reasoning.txt" || 
+             p.filename.toLowerCase().endsWith("/reasoning.txt")
+    );
+    const userReasoning = reasoningFile ? extractUserReasoning(reasoningFile.patch) : null;
+    
+    if (userReasoning) {
+      console.log("[Analyze] Found user reasoning:", userReasoning.substring(0, 200) + "...");
+    }
+    
     // Use AI to analyze the code
-    const analysisResult = await analyzeWithAI(patches, stressMetadata || null);
+    const analysisResult = await analyzeWithAI(patches, stressMetadata || null, userReasoning);
 
     return NextResponse.json(analysisResult);
   } catch (error) {
