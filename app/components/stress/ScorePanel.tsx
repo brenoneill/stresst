@@ -416,7 +416,7 @@ export function ScorePanel({
   const showingAnalysisMode = analyzing || (analysisResult && showAnalysisView);
 
   return (
-    <div className={`flex h-full flex-col gap-4 overflow-y-auto pt-6 transition-all duration-500 ease-out ${isVisible ? "opacity-100" : "opacity-0"}`}>
+    <div className={`flex h-full flex-col gap-4 overflow-y-auto pt-10 transition-all duration-500 ease-out ${isVisible ? "opacity-100" : "opacity-0"}`}>
       {/* View Toggle - shown when analyzing or analysis results exist */}
       {(analyzing || analysisResult) && (
         <div className="flex items-center justify-center gap-1 p-1 rounded-lg bg-gh-canvas-subtle">
