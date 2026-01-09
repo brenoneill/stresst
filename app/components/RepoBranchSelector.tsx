@@ -229,7 +229,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
         handleCommitSelect(data[0]);
       }
 
-      // Fetch stress metadata for buggr branches
+      // Fetch stress metadata for buggr branches, so metadat can be compared for analysis
       if (branchName.includes("buggr-")) {
         setLoadingMetadata(true);
         try {
@@ -317,7 +317,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
       );
     }
 
-    // File selection mode: "most_changes" (default) sorts by additions+deletions, "random" shuffles
+    // File selection mode: "most_changes" sorts by additions+deletions, "random" (default) shuffles
     const fileSelectionMode = process.env.NEXT_PUBLIC_FILE_SELECTION_MODE || "random";
     
     let sortedFiles;
@@ -329,7 +329,6 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
         [sortedFiles[i], sortedFiles[j]] = [sortedFiles[j], sortedFiles[i]];
       }
     } else {
-      // Default: sort by most changes (additions + deletions)
       sortedFiles = [...availableFiles].sort(
         (a, b) => b.additions + b.deletions - (a.additions + a.deletions)
       );

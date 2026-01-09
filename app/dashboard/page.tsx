@@ -14,7 +14,7 @@ export default async function Dashboard() {
   // Get access token with fallback for type safety
   const accessToken = session?.accessToken ?? "";
 
-  // Fetch repos for authenticated user (returns empty array if no token)
+  // Fetch repos for authenticated user
   const repos = accessToken 
     ? await fetchUserRepos(accessToken).catch(() => [])
     : [];
