@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import type { GitHubCommit, StressMetadata } from "@/lib/github";
 import type { AnalysisFeedback, AnalyzeResponse } from "@/app/api/github/analyze/route";
+import { formatShortDate } from "@/lib/date";
 import { Button } from "@/app/components/inputs/Button";
 import { LoadingProgress, LoadingStep } from "@/app/components/stress/LoadingProgress";
 import { CloseIcon, BuggrIcon, SparklesIcon, CheckIcon, InfoIcon, LightbulbIcon, TrophyIcon } from "@/app/components/icons";
@@ -31,22 +32,6 @@ interface ScorePanelProps {
   onClose: () => void;
   /** Optional buggr metadata from .buggr.json */
   stressMetadata?: StressMetadata | null;
-}
-
-/**
- * Formats a date string into a human-readable format.
- *
- * @param dateString - ISO date string to format
- * @returns Formatted date string (e.g., "Dec 17, 2025 at 2:30 PM")
- */
-function formatFullDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 /**
@@ -560,7 +545,7 @@ export function ScorePanel({
                 {startCommit.commit.message.split("\n")[0]}
               </p>
               <p className="text-xs text-gh-text-muted">
-                {formatFullDate(startCommit.commit.author.date)}
+                {formatShortDate(startCommit.commit.author.date)}
               </p>
             </div>
             <code className="shrink-0 rounded bg-gh-canvas-default px-2 py-0.5 font-mono text-xs text-gh-accent">
@@ -589,7 +574,7 @@ export function ScorePanel({
                 {completeCommit.commit.message.split("\n")[0]}
               </p>
               <p className="text-xs text-gh-text-muted">
-                {formatFullDate(completeCommit.commit.author.date)}
+                {formatShortDate(completeCommit.commit.author.date)}
               </p>
             </div>
             <code className="shrink-0 rounded bg-gh-canvas-default px-2 py-0.5 font-mono text-xs text-gh-accent">

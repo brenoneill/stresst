@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { GitHubRepo, GitHubBranch, GitHubCommit, GitHubCommitDetails, StressMetadata } from "@/lib/github";
 import { fetchStressMetadata } from "@/lib/github";
+import { formatFullDate, generateTimestamp } from "@/lib/date";
 import { useDashboardUrl } from "@/app/hooks/useDashboardUrl";
 import { useNotes } from "@/app/context/NotesContext";
 import { NotesPanel } from "@/app/components/NotesPanel";
@@ -156,20 +157,6 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
       score: showScorePanel,
     });
   }, [selectedRepo, selectedBranch, selectedCommit, showScorePanel, urlInitialized, updateUrlParams]);
-
-  /**
-   * Generates a timestamp string for branch naming (YYYYMMDD-HHMMSS).
-   */
-  function generateTimestamp(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    const hours = String(now.getHours()).padStart(2, "0");
-    const minutes = String(now.getMinutes()).padStart(2, "0");
-    const seconds = String(now.getSeconds()).padStart(2, "0");
-    return `${year}${month}${day}-${hours}${minutes}${seconds}`;
-  }
 
   /**
    * Fetches branches for the selected repository.
@@ -504,20 +491,6 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
     } finally {
       setDeletingBranch(false);
     }
-  }
-
-  /**
-   * Formats a date string to a full readable format.
-   */
-  function formatFullDate(dateString: string): string {
-    return new Date(dateString).toLocaleString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   }
 
   /**
