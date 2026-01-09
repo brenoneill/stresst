@@ -15,11 +15,11 @@ import {
 
 /** Steps shown during code analysis */
 const ANALYSIS_STEPS: LoadingStep[] = [
-  { label: "Fetching commit changes", timeEstimate: "~2s" },
-  { label: "Reading your code diff", timeEstimate: "~1s" },
-  { label: "Checking for reasoning.txt", timeEstimate: "~1s" },
-  { label: "AI analyzing your fix", timeEstimate: "~5s" },
-  { label: "Generating feedback", timeEstimate: "~1m" },
+  { label: "Fetching commit changes", timeEstimate: "5-30s" },
+  { label: "Reading your code diff", timeEstimate: "5-30s" },
+  { label: "Checking for reasoning.txt", timeEstimate: "5-30s" },
+  { label: "AI analyzing your fix", timeEstimate: "5-30s" },
+  { label: "Generating feedback", timeEstimate: "1-2 min" },
 ];
 
 interface ScorePanelProps {
