@@ -24,6 +24,12 @@ model User {
   emailVerified DateTime?
   image         String?
 
+  // Git provider profile data
+  // These are populated from the OAuth provider on first sign-in
+  gitProvider   String?   // "github", "gitlab", "bitbucket", etc.
+  gitUsername   String?   // Username on the git provider
+  gitProfileUrl String?   // URL to their profile
+
   // Relations
   accounts      Account[]
   sessions      Session[]
@@ -31,6 +37,8 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([gitUsername])
 }
 
 model Account {

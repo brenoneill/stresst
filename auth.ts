@@ -3,6 +3,12 @@ import GitHub from "next-auth/providers/github";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
+/** GitHub profile shape from OAuth response */
+interface GitHubProfile {
+  login: string;
+  html_url: string;
+}
+
 /**
  * NextAuth.js configuration with GitHub OAuth provider and Prisma adapter.
  * 
@@ -29,10 +35,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     /**
      * Stores the GitHub access token in the JWT for API calls.
+     * Also updates the user's git provider data on first sign-in.
      */
-    async jwt({ token, account }) {
-      if (account) {
+    async jwt({ token, account, profile }) {
+      if (account && profile) {
         token.accessToken = account.access_token;
+        
+        // Update user with git provider data on sign-in
+        const gitProfile = profile as GitHubProfile;
+        if (token.sub) {
+          await prisma.user.update({
+            where: { id: token.sub },
+            data: {
+              gitProvider: account.provider,
+              gitUsername: gitProfile.login,
+              gitProfileUrl: gitProfile.html_url,
+            },
+          });
+        }
       }
       return token;
     },
