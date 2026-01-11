@@ -19,7 +19,7 @@ import { CreateBranchForm } from "@/app/components/stress/CreateBranchForm";
 import { BranchSuccessCard } from "@/app/components/stress/BranchSuccessCard";
 import { ScorePanel } from "@/app/components/stress/ScorePanel";
 import { PublicReposList } from "@/app/components/PublicReposList";
-import { GitHubIcon, CloseIcon, TrashIcon, DocumentIcon, CheckIcon, CopyIcon, ExternalLinkIcon, TrophyIcon, BuggrIcon } from "@/app/components/icons";
+import { GitHubIcon, CloseIcon, TrashIcon, DocumentIcon, CheckIcon, CopyIcon, ExternalLinkIcon, TrophyIcon, BuggrIcon, ChevronDownIcon } from "@/app/components/icons";
 import { LOADING_STEPS } from "@/app/components/stress/loading-steps";
 
 interface RepoBranchSelectorProps {
@@ -767,14 +767,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
                 className="group flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-gh-canvas-subtle"
               >
                 <span className="font-semibold text-white group-hover:text-gh-accent">{userName}</span>
-                <svg 
-                  className="h-4 w-4 text-gh-text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-gh-accent" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <ChevronDownIcon className="h-4 w-4 -rotate-90 text-gh-text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-gh-accent" />
               </Link>
               <div>{logoutForm}</div>
             </div>
