@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
 import type { GitHubCommit, StressMetadata } from "@/lib/github";
 import type { AnalysisFeedback, AnalyzeResponse } from "@/app/api/github/analyze/route";
 import { formatShortDate } from "@/lib/date";
@@ -13,28 +12,7 @@ import {
   calculateScoreRating,
   DIFFICULTY_CONFIG,
 } from "@/lib/score-config";
-
-/** Response type from the /api/results/[buggerId] endpoint */
-interface ExistingResultResponse {
-  result: {
-    id: string;
-    grade: string;
-    timeMs: number;
-    analysisSummary: string | null;
-    analysisIsPerfect: boolean;
-    analysisFeedback: AnalysisFeedback[] | null;
-    createdAt: string;
-  } | null;
-  bugger: {
-    id: string;
-    owner: string;
-    repo: string;
-    branchName: string;
-    stressLevel: string;
-    bugCount: number;
-    createdAt: string;
-  };
-}
+import { useResultByBugger, useSaveResult } from "@/app/hooks/useBuggers";
 
 /** Steps shown during code analysis */
 const ANALYSIS_STEPS: LoadingStep[] = [
@@ -270,33 +248,29 @@ export function ScorePanel({
   const stepIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check for existing result in the database
-  const { data: existingData, isLoading: isCheckingExisting } = useQuery<ExistingResultResponse>({
-    queryKey: ["result", stressMetadata?.buggerId],
-    queryFn: async () => {
-      const response = await fetch(`/api/results/${stressMetadata?.buggerId}`);
-      if (!response.ok) throw new Error("Failed to fetch existing result");
-      return response.json();
-    },
-    enabled: !!stressMetadata?.buggerId,
-  });
+  const { result: existingResult, isLoading: isCheckingExisting } = useResultByBugger(
+    stressMetadata?.buggerId
+  );
+
+  // Mutation hook for saving results
+  const { saveResult, isSaving } = useSaveResult();
 
   // If we found an existing result, populate the analysis state with a reveal animation
   useEffect(() => {
-    const result = existingData?.result;
-    if (result && !analysisResult) {
+    if (existingResult && !analysisResult) {
       // Small delay to allow the loading state to fade out first
       const timer = setTimeout(() => {
         setAnalysisResult({
-          summary: result.analysisSummary || "",
-          isPerfect: result.analysisIsPerfect,
-          feedback: result.analysisFeedback || [],
+          summary: existingResult.analysisSummary || "",
+          isPerfect: existingResult.analysisIsPerfect,
+          feedback: existingResult.analysisFeedback || [],
         });
         // Trigger the reveal animation after content is set
         setTimeout(() => setAnalysisRevealed(true), 50);
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [existingData, analysisResult]);
+  }, [existingResult, analysisResult]);
 
   // Also trigger reveal when analysis completes from a fresh analyze action
   useEffect(() => {
@@ -340,36 +314,28 @@ export function ScorePanel({
   const bugCount = stressMetadata?.bugCount || 1;
 
   /**
-   * Saves the stress test result to the database.
+   * Saves the stress test result to the database using the mutation hook.
    * Called after analysis completes successfully.
    * 
-   * @param analysisResult - The AI analysis result
+   * @param analysis - The AI analysis result
    */
-  const saveResult = async (analysisResult: AnalyzeResponse) => {
+  const handleSaveResult = async (analysis: AnalyzeResponse) => {
     if (!stressMetadata?.buggerId) {
       console.warn("No buggerId found in stressMetadata, skipping result save");
       return;
     }
 
     try {
-      const response = await fetch("/api/results", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          buggerId: stressMetadata.buggerId,
-          grade: scoreRating.grade,
-          timeMs,
-          startCommitSha: startCommit.sha,
-          completeCommitSha: completeCommit.sha,
-          analysisSummary: analysisResult.summary,
-          analysisIsPerfect: analysisResult.isPerfect,
-          analysisFeedback: analysisResult.feedback,
-        }),
+      await saveResult({
+        buggerId: stressMetadata.buggerId,
+        grade: scoreRating.grade,
+        timeMs,
+        startCommitSha: startCommit.sha,
+        completeCommitSha: completeCommit.sha,
+        analysisSummary: analysis.summary,
+        analysisIsPerfect: analysis.isPerfect,
+        analysisFeedback: analysis.feedback,
       });
-
-      if (!response.ok) {
-        console.error("Failed to save result:", await response.text());
-      }
     } catch (error) {
       // Log but don't fail the UI if saving fails
       console.error("Error saving result:", error);
@@ -430,7 +396,7 @@ export function ScorePanel({
       setAnalysisResult(result);
       
       // Save the result to the database
-      await saveResult(result);
+      await handleSaveResult(result);
     } catch (error) {
       console.error("Error analyzing code:", error);
       setAnalysisError("Failed to analyze code. Please try again.");
