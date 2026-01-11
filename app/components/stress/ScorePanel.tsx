@@ -580,7 +580,7 @@ export function ScorePanel({
                       {item.improvement && (
                         <div className="mt-2 rounded-md bg-gh-canvas-default/50 p-2">
                           <p className="text-xs font-medium text-purple-300 mb-1">💡 Better approach:</p>
-                          <p className="text-xs text-gh-text-secondary">{item.improvement}</p>
+                          <p className="text-xs text-gh-text-muted">{item.improvement}</p>
                         </div>
                       )}
                       {item.file && (
