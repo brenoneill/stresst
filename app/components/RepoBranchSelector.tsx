@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import type { GitHubRepo, GitHubBranch, GitHubCommit, GitHubCommitDetails, StressMetadata } from "@/lib/github";
 import { fetchStressMetadata } from "@/lib/github";
 import { formatFullDate, generateTimestamp } from "@/lib/date";
 import { useDashboardState } from "@/app/hooks/useDashboardState";
+import { notificationsQueryKey } from "@/app/hooks";
 import { useNotes } from "@/app/context/NotesContext";
 import { NotesPanel } from "@/app/components/NotesPanel";
 import { Select } from "@/app/components/inputs/Select";
@@ -37,7 +39,8 @@ interface RepoBranchSelectorProps {
  * @param accessToken - GitHub OAuth access token for fetching data
  */
 export function RepoBranchSelector({ repos: initialRepos, accessToken, userName, logoutForm }: RepoBranchSelectorProps) {
-  const { addNote, addBranchChange } = useNotes();
+  const { openPanel } = useNotes();
+  const queryClient = useQueryClient();
   
   // URL state via nuqs - automatically syncs with URL
   const { 
@@ -445,25 +448,9 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
       } else {
         setBranchSuccess(fullBranchName);
 
-        // Add branch change to notifications (viewable in Branch Changes tab)
-        addBranchChange({
-          branchName: fullBranchName,
-          repoName: selectedRepo.name,
-          repoOwner: selectedRepo.owner.login,
-          message: stressData.message,
-          files: stressData.results,
-        });
-
-        // Add bug report if symptoms were generated
-        if (stressData.symptoms && stressData.symptoms.length > 0) {
-          addNote({
-            title: "🐛 Bug Report Received",
-            messages: stressData.symptoms,
-            branchName: fullBranchName,
-            repoName: selectedRepo.name,
-            repoOwner: selectedRepo.owner.login,
-          });
-        }
+        // Refresh notifications from database and open the panel
+        queryClient.invalidateQueries({ queryKey: notificationsQueryKey() });
+        openPanel();
       }
 
       setBranchSuffix("");

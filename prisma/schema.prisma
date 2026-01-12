@@ -108,6 +108,14 @@ model Bugger {
   // Files that were buggered
   filesBuggered String[]
 
+  // Detailed file changes with per-file info (for notifications UI)
+  // Structure: [{ file: string, success: boolean, changes?: string[] }]
+  fileChanges Json?
+
+  // Notification read status
+  noteRead    Boolean  @default(false)   // Bug Report notification read
+  changesRead Boolean  @default(false)   // Branch Changes notification read
+
   // Result (optional - null until user completes the challenge)
   result      Result?
 

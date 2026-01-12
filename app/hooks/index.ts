@@ -19,6 +19,17 @@ export {
   type ResultByBuggerResponse,
 } from "./useBuggers";
 
+// Notification hooks
+export {
+  useNotifications,
+  useMarkNoteRead,
+  useMarkChangesRead,
+  useMarkAllRead,
+  notificationsQueryKey,
+  type Note,
+  type BranchChange,
+} from "./useNotifications";
+
 // Dashboard URL state (using nuqs)
 export { useDashboardState } from "./useDashboardState";
 

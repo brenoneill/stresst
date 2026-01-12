@@ -271,6 +271,13 @@ export async function POST(request: NextRequest) {
           : null;
 
         if (user) {
+          // Format file changes for the UI (includes per-file change details)
+          const fileChanges = successfulResults.map((r) => ({
+            file: r.file,
+            success: true,
+            changes: r.changes || [],
+          }));
+
           const bugger = await prisma.bugger.create({
             data: {
               userId: user.id,
@@ -283,6 +290,9 @@ export async function POST(request: NextRequest) {
               symptoms: uniqueSymptoms,
               changes: allChanges,
               filesBuggered,
+              fileChanges, // Detailed per-file changes for notifications UI
+              noteRead: false,
+              changesRead: false,
             },
           });
           buggerId = bugger.id;
