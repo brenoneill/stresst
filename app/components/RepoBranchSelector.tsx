@@ -7,7 +7,7 @@ import type { GitHubRepo, GitHubBranch, GitHubCommit, GitHubCommitDetails, Stres
 import { fetchStressMetadata } from "@/lib/github";
 import { formatFullDate, generateTimestamp } from "@/lib/date";
 import { useDashboardState } from "@/app/hooks/useDashboardState";
-import { notificationsQueryKey, useUser, userQueryKey } from "@/app/hooks";
+import { notificationsQueryKey, useUser, userQueryKey, useInvitations } from "@/app/hooks";
 import { useNotes } from "@/app/context/NotesContext";
 import { NotesPanel } from "@/app/components/NotesPanel";
 import { Select } from "@/app/components/inputs/Select";
@@ -22,6 +22,7 @@ import { BranchSuccessCard } from "@/app/components/stress/BranchSuccessCard";
 import { ScorePanel } from "@/app/components/stress/ScorePanel";
 import { PublicReposList } from "@/app/components/PublicReposList";
 import { GitHubIcon, CloseIcon, TrashIcon, DocumentIcon, CheckIcon, CopyIcon, ExternalLinkIcon, TrophyIcon, BuggrIcon, ChevronDownIcon, CoinIcon } from "@/app/components/icons";
+import { InvitePromptModal } from "@/app/components/InvitePromptModal";
 import { LOADING_STEPS } from "@/app/components/stress/loading-steps";
 import { STRESS_LEVEL_COSTS } from "@/lib/stress-costs";
 
@@ -43,6 +44,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
   const { openPanel } = useNotes();
   const queryClient = useQueryClient();
   const { user } = useUser();
+  const { invitations, isLoading: invitationsLoading } = useInvitations();
   
   // URL state via nuqs - automatically syncs with URL
   const { 
@@ -981,6 +983,12 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
           <EmptyState icon={EmptyStateIcons.commits} title="No commit selected" description="Select a commit from the list to view changed files" />
         )}
       </div>
+
+      {/* Invite Prompt Modal */}
+      <InvitePromptModal 
+        hasInvites={invitations.length > 0} 
+        isLoading={invitationsLoading} 
+      />
     </div>
   );
 }
