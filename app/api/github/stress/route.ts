@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { fetchFileContent, updateFile, createStressMetadata, StressMetadata } from "@/lib/github";
 import { introduceAIStress, AIStressResult } from "@/lib/ai-stress";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logTokenUsage, TokenUsageData } from "@/lib/token-usage";
 import { STRESS_LEVEL_COSTS } from "@/lib/stress-costs";
@@ -343,7 +344,7 @@ export async function POST(request: NextRequest) {
               symptoms: uniqueSymptoms,
               changes: allChanges,
               filesBuggered,
-              fileChanges, // Detailed per-file changes for notifications UI
+              fileChanges: fileChanges as unknown as Prisma.InputJsonValue, // Detailed per-file changes for notifications UI
               noteRead: false,
               changesRead: false,
             },

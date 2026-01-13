@@ -49,7 +49,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.accessToken = account.access_token;
         
         // Update user with git provider data on sign-in
-        const gitProfile = profile as GitHubProfile;
+        const gitProfile = profile as unknown as GitHubProfile;
         if (token.sub) {
           await prisma.user.update({
             where: { id: token.sub },
