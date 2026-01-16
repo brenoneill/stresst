@@ -23,6 +23,10 @@ const MAX_FILE_LINES_MULTIPLE = 2000; // If multiple files, limit to 2000 lines 
  * Selected file can be up to 5000 lines.
  */
 export async function POST(request: NextRequest) {
+  const requestStartMs = Date.now();
+  let aiStartMs: number | null = null;
+  let aiEndMs: number | null = null;
+
   const session = await auth();
 
   if (!session?.accessToken) {
@@ -226,6 +230,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Apply stress to each selected file
+    aiStartMs = Date.now();
     for (let i = 0; i < selectedFiles.length; i++) {
       const selectedFile = selectedFiles[i];
       const bugsForThisFile = bugDistribution[i];
@@ -288,6 +293,7 @@ export async function POST(request: NextRequest) {
         });
       }
     }
+    aiEndMs = Date.now();
 
     const successCount = results.filter((r) => r.success).length;
     const failedResults = results.filter((r) => !r.success && r.error);
@@ -316,6 +322,8 @@ export async function POST(request: NextRequest) {
     }
     
     if (successCount > 0) {
+      const executionCompletedAt = new Date();
+      const aiDurationMs = aiStartMs && aiEndMs ? aiEndMs - aiStartMs : null;
       const successfulResults = results.filter((r) => r.success);
       const allChanges = successfulResults.flatMap((r) => r.changes || []);
       const filesBuggered = successfulResults.map((r) => r.file);
@@ -347,6 +355,11 @@ export async function POST(request: NextRequest) {
               fileChanges: fileChanges as unknown as Prisma.InputJsonValue, // Detailed per-file changes for notifications UI
               noteRead: false,
               changesRead: false,
+              createdAt: new Date(requestStartMs),
+              executedAt: executionCompletedAt,
+              aiStartedAt: aiStartMs ? new Date(aiStartMs) : null,
+              aiCompletedAt: aiEndMs ? new Date(aiEndMs) : null,
+              aiDurationMs: aiDurationMs ?? null,
             },
           });
 
@@ -385,7 +398,11 @@ export async function POST(request: NextRequest) {
         buggerId: buggerId || undefined,
         stressLevel: effectiveStressLevel,
         bugCount: totalBugCount,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(requestStartMs).toISOString(),
+        executedAt: executionCompletedAt.toISOString(),
+        aiStartedAt: aiStartMs ? new Date(aiStartMs).toISOString() : undefined,
+        aiCompletedAt: aiEndMs ? new Date(aiEndMs).toISOString() : undefined,
+        aiDurationMs: aiDurationMs ?? undefined,
         symptoms: uniqueSymptoms,
         filesBuggered,
         changes: allChanges,

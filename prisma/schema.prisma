@@ -126,10 +126,15 @@ model Bugger {
   noteRead    Boolean  @default(false)   // Bug Report notification read
   changesRead Boolean  @default(false)   // Branch Changes notification read
 
+  // Timing
+  createdAt       DateTime @default(now()) // Request started (overridden at creation time)
+  executedAt      DateTime?               // When buggering finished and was persisted
+  aiStartedAt     DateTime?               // When AI generation began
+  aiCompletedAt   DateTime?               // When AI generation completed
+  aiDurationMs    Int?                    // Duration of AI generation in ms
+
   // Result (optional - null until user completes the challenge)
   result      Result?
-
-  createdAt   DateTime @default(now())
 
   @@index([userId])
   @@index([owner, repo])

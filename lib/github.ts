@@ -324,6 +324,14 @@ export interface StressMetadata {
   bugCount: number;
   /** ISO timestamp when the bug session was created */
   createdAt: string;
+  /** ISO timestamp when the buggering finished executing */
+  executedAt: string;
+  /** ISO timestamp when AI generation started (if recorded) */
+  aiStartedAt?: string;
+  /** ISO timestamp when AI generation completed (if recorded) */
+  aiCompletedAt?: string;
+  /** Duration of AI generation in milliseconds (if recorded) */
+  aiDurationMs?: number;
   /** User-facing symptom descriptions */
   symptoms: string[];
   /** Files that were buggered */
