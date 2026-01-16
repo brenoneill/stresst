@@ -359,19 +359,22 @@ export default function ProfilePage() {
         <CoinsUpsell contactEmail="hello@buggr.dev" />
 
         {/* Stats Grid */}
-        <div className="mt-20 mb-8 grid grid-cols-3 gap-4">
-          <Container className="p-4 text-center">
-            <p className="text-3xl font-bold text-white">{user.stats.totalBuggers}</p>
-            <p className="mt-1 text-sm text-gh-text-muted">Challenges</p>
-          </Container>
-          <Container className="p-4 text-center">
-            <p className="text-3xl font-bold text-green-400">{user.stats.completedBuggers}</p>
-            <p className="mt-1 text-sm text-gh-text-muted">Completed</p>
-          </Container>
-          <Container className="p-4 text-center">
-            <p className="text-3xl font-bold text-gh-accent">{completionRate}%</p>
-            <p className="mt-1 text-sm text-gh-text-muted">Completion Rate</p>
-          </Container>
+        <div className="mt-8 mb-8">
+          <h2 className="mb-4 text-lg font-semibold text-white">Your Challenge Stats</h2>
+          <div className="grid grid-cols-3 gap-4">
+            <Container className="p-4 text-center">
+              <p className="text-3xl font-bold text-white">{user.stats.totalBuggers}</p>
+              <p className="mt-1 text-sm text-gh-text-muted">Challenges</p>
+            </Container>
+            <Container className="p-4 text-center">
+              <p className="text-3xl font-bold text-green-400">{user.stats.completedBuggers}</p>
+              <p className="mt-1 text-sm text-gh-text-muted">Completed</p>
+            </Container>
+            <Container className="p-4 text-center">
+              <p className="text-3xl font-bold text-gh-accent">{completionRate}%</p>
+              <p className="mt-1 text-sm text-gh-text-muted">Completion Rate</p>
+            </Container>
+          </div>
         </div>
 
         {/* Recent Activity */}
