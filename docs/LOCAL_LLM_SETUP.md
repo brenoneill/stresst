@@ -284,7 +284,7 @@ curl http://localhost:11434/v1/models
 ## Still Having Issues?
 
 1. Check the [Ollama documentation](https://github.com/ollama/ollama/blob/main/docs/README.md)
-2. Open an issue on the [Buggr GitHub repository](https://github.com/brenoneill/buggr/issues)
+2. Open an issue on the [Buggr GitHub repository](https://github.com/buggr-dev/buggr/issues)
 3. Verify your setup works with a simple test:
 
 ```bash

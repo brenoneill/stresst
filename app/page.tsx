@@ -19,7 +19,7 @@ import {
 } from "./components/icons";
 
 /** GitHub repository URL for "View on GitHub" buttons in website mode */
-const GITHUB_REPO_URL = "https://github.com/brenoneill/buggr";
+const GITHUB_REPO_URL = "https://github.com/buggr-dev/buggr";
 
 /**
  * Landing/info page shown to unauthenticated users.
@@ -551,7 +551,7 @@ export default async function Home() {
                 <div className="rounded-lg bg-gh-canvas p-4">
                   <code className="text-sm text-gh-text-muted">
                     <span className="text-gh-text-muted">$</span>{" "}
-                    <span className="text-gh-accent">git clone</span> https://github.com/brenoneill/buggr.git
+                    <span className="text-gh-accent">git clone</span> https://github.com/buggr-dev/buggr.git
                   </code>
                 </div>
                 <div className="rounded-lg bg-gh-canvas p-4">
@@ -571,7 +571,7 @@ export default async function Home() {
             <p className="text-sm text-gh-text-muted">
               Check the{" "}
               <a
-                href="https://github.com/brenoneill/buggr#readme"
+                href="https://github.com/buggr-dev/buggr#readme"
                 className="text-gh-accent hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"

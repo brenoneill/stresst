@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchPublicRepos } from "@/lib/github";
 
 // The GitHub username/org to fetch public repos from
-const BUGGR_GITHUB_USERNAME = "brenoneill";
+const BUGGR_GITHUB_USERNAME = "buggr-dev";
 
 /**
  * GET /api/github/public-repos

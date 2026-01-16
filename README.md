@@ -131,7 +131,7 @@ export AI_MODEL=llama3
 
 ```bash
 # Clone the repository
-git clone https://github.com/brenoneill/buggr.git
+git clone https://github.com/buggr-dev/buggr.git
 cd buggr
 
 # Install dependencies
