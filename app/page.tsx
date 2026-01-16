@@ -18,14 +18,14 @@ import {
   TrophyIcon,
 } from "./components/icons";
 
-/** GitHub repository URL for "Pull from GitHub" buttons in website mode */
+/** GitHub repository URL for "View on GitHub" buttons in website mode */
 const GITHUB_REPO_URL = "https://github.com/brenoneill/buggr";
 
 /**
  * Landing/info page shown to unauthenticated users.
  * Middleware handles redirecting authenticated users to /dashboard.
  * 
- * When WEBSITE_MODE env var is set, login buttons become "Pull from GitHub" links
+ * When WEBSITE_MODE env var is set, login buttons become "View on GitHub" links
  * since authentication only works when running locally.
  */
 export default async function Home() {
@@ -51,7 +51,7 @@ export default async function Home() {
           <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
             <Button type="button" variant="primary">
               <GitHubIcon className="h-4 w-4" />
-              Pull from GitHub
+              View on GitHub
             </Button>
           </a>
         ) : (
@@ -75,7 +75,7 @@ export default async function Home() {
           <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
             <Button type="button" variant="primary">
               <GitHubIcon className="h-4 w-4" />
-              Pull from GitHub
+              View on GitHub
             </Button>
           </a>
         ) : (
@@ -112,11 +112,17 @@ export default async function Home() {
             We inject realistic bugs into any codebase. You find and fix them.
             The faster you finish, the better your score.
           </p>
+          <div className="mb-8 flex flex-wrap justify-center gap-3 text-sm text-gh-text-muted">
+            <div className="flex items-center gap-2 rounded-full border border-gh-border bg-gh-canvas-subtle px-4 py-2">
+              <span className="text-gh-danger-fg">!</span>
+              See if you can complete the run without using code-gen tools
+            </div>
+          </div>
           {isWebsiteMode ? (
             <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
               <Button type="button" variant="primary" size="lg">
                 <GitHubIcon className="h-5 w-5" />
-                Pull from GitHub
+                View on GitHub
               </Button>
             </a>
           ) : (
@@ -128,7 +134,7 @@ export default async function Home() {
             >
               <Button type="submit" variant="primary" size="lg">
                 <GitHubIcon className="h-5 w-5" />
-                Get Started
+                Start Buggering
               </Button>
             </form>
           )}
@@ -142,7 +148,7 @@ export default async function Home() {
             </div>
             <h3 className="text-2xl font-bold text-white">How It Works</h3>
           </div>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
               <h4 className="mb-3 flex items-center gap-2 text-lg font-semibold text-white">
                 <span className="text-xl">🤖</span> AI-Generated Bugs
@@ -177,6 +183,24 @@ export default async function Home() {
               <p className="text-sm leading-relaxed text-gh-text-muted">
                 Share bug reports with teammates and compare scores. 
                 Great for team challenges or interviews.
+              </p>
+            </div>
+            <div className="rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
+              <h4 className="mb-3 flex items-center gap-2 text-lg font-semibold text-white">
+                <span className="text-xl">🖥️</span> Server-Hosted Runs
+              </h4>
+              <p className="text-sm leading-relaxed text-gh-text-muted">
+                We clone your repo, inject bugs, and track progress in our DB — no
+                local setup or manual Git pulls required.
+              </p>
+            </div>
+            <div className="rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
+              <h4 className="mb-3 flex items-center gap-2 text-lg font-semibold text-white">
+                <span className="text-xl">🙅‍♂️</span> No Code-Gen
+              </h4>
+              <p className="text-sm leading-relaxed text-gh-text-muted">
+                This is a human debugging challenge. Please keep Copilot/Cursor
+                code generation off so your score reflects your own fixes.
               </p>
             </div>
           </div>
@@ -226,6 +250,11 @@ export default async function Home() {
             <p className="mb-4 text-lg leading-relaxed text-gh-text-muted">
               Or are you just re-prompting until the errors go away?
             </p>
+            <p className="mb-4 text-lg leading-relaxed text-gh-text-muted">
+              Buggr now runs on our server with a connected database, so your repo
+              is cloned, stressed, and tracked remotely. You stay in the browser — no
+              local pulls or setup needed.
+            </p>
             <p className="text-lg leading-relaxed text-gh-text-muted">
               <span className="font-semibold text-white">Buggr</span> gives you practice debugging 
               real codebases with realistic bugs. It&apos;s a way to build actual debugging skills —{" "}
@@ -246,9 +275,9 @@ export default async function Home() {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {[
-              { step: "1", title: "Connect", desc: "Sign in with GitHub to access your repos" },
-              { step: "2", title: "Select", desc: "Choose a repo, commit, and difficulty" },
-              { step: "3", title: "Debug", desc: "Find and fix bugs — faster times = better scores" },
+              { step: "1", title: "Connect", desc: "Sign in with GitHub; we securely clone your repo on the server" },
+              { step: "2", title: "Select", desc: "Choose a repo, commit, and difficulty — we seed the bugs" },
+              { step: "3", title: "Debug", desc: "Fix the issues without code-gen tools; faster times = better scores" },
             ].map((item) => (
               <div
                 key={item.step}
@@ -422,8 +451,8 @@ export default async function Home() {
               </div>
               <h4 className="mb-2 text-lg font-semibold text-white">Your Own Repos</h4>
               <p className="mb-4 text-sm leading-relaxed text-gh-text-muted">
-                Use any repository you have access to. Test yourself on code you 
-                work with every day.
+                Use any repository you have access to. We clone and branch on the
+                server so you don&apos;t need to pull locally unless you want to.
               </p>
               <div className="flex items-center gap-2 text-xs text-gh-text-muted">
                 <InfoIcon className="h-4 w-4" />
@@ -467,28 +496,57 @@ export default async function Home() {
             <h3 className="text-2xl font-bold text-white">Quick Start</h3>
           </div>
           <div className="rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
-            <div className="mb-6">
-              <h4 className="mb-3 font-semibold text-white">What You Need</h4>
-              <ul className="space-y-2 text-sm text-gh-text-muted">
-                <li className="flex items-center gap-2">
-                  <span className="text-gh-success-fg">✓</span> Node.js 18+
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-gh-success-fg">✓</span> A GitHub account
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-gh-success-fg">✓</span>
-                  <span>
-                    An LLM provider — <span className="text-gh-accent">Anthropic</span> (recommended), OpenAI, or a local LLM
-                    <span className="block text-xs text-gh-text-muted/70">
-                      Anthropic works best. Local LLMs need a beefy machine.
-                    </span>
-                  </span>
-                </li>
-              </ul>
+            <div className="mb-6 grid gap-4 md:grid-cols-2">
+              <div className="rounded-lg border border-gh-border bg-gh-canvas p-4">
+                <h4 className="mb-2 font-semibold text-white">Try it on our server (recommended)</h4>
+                <ul className="space-y-1 text-sm text-gh-text-muted">
+                  <li>• Sign in with GitHub</li>
+                  <li>• Pick a repo/commit and a difficulty</li>
+                  <li>• Debug in the browser — no local clone required</li>
+                  <li>• Keep code-gen tools off for an honest score</li>
+                </ul>
+              </div>
+              <div className="rounded-lg border border-gh-border bg-gh-canvas p-4">
+                <h4 className="mb-2 font-semibold text-white">Run it yourself (open source)</h4>
+                <ul className="space-y-1 text-sm text-gh-text-muted">
+                  <li>• Clone the repo and install dependencies</li>
+                  <li>• Configure GitHub OAuth + your LLM provider</li>
+                  <li>• Start the app locally and stress your own repos</li>
+                  <li>• Still keep code-gen tools off when you run challenges</li>
+                </ul>
+              </div>
             </div>
             <div className="mb-6">
-              <h4 className="mb-3 font-semibold text-white">Setup</h4>
+              <h4 className="mb-3 font-semibold text-white">Self-hosting? (optional)</h4>
+              <p className="mb-3 text-sm text-gh-text-muted">
+                Want to run Buggr on your own infra? Clone and boot locally:
+              </p>
+              <div className="mb-3">
+                <h5 className="mb-2 text-sm font-semibold text-white">What you need</h5>
+                <ul className="space-y-2 text-sm text-gh-text-muted">
+                  <li className="flex items-center gap-2">
+                    <span className="text-gh-success-fg">✓</span> Node.js 18+
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-gh-success-fg">✓</span> A GitHub account
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-gh-success-fg">✓</span>
+                    <span>
+                      An LLM provider — <span className="text-gh-accent">Anthropic</span> (recommended), OpenAI, or a local LLM
+                      <span className="block text-xs text-gh-text-muted/70">
+                        Anthropic works best. Local LLMs need a beefy machine.
+                      </span>
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-gh-success-fg">✓</span>
+                    <span>
+                      Keep code-gen tools off. Runs are meant to measure your debugging skills.
+                    </span>
+                  </li>
+                </ul>
+              </div>
               <div className="space-y-3">
                 <div className="rounded-lg bg-gh-canvas p-4">
                   <code className="text-sm text-gh-text-muted">
@@ -530,13 +588,13 @@ export default async function Home() {
           <div className="rounded-xl border border-gh-border bg-gradient-to-r from-gh-danger/10 via-gh-canvas-subtle to-gh-success/10 p-10">
             <h3 className="mb-4 text-2xl font-bold text-white">Ready to find out?</h3>
             <p className="mx-auto mb-6 max-w-lg text-gh-text-muted">
-              Connect your GitHub account and start debugging.
+              Connect your GitHub account and start debugging. No local clone, and no code-gen tools.
             </p>
             {isWebsiteMode ? (
               <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
                 <Button type="button" variant="primary" size="lg">
                   <GitHubIcon className="h-5 w-5" />
-                  Pull from GitHub
+                  View on GitHub
                 </Button>
               </a>
             ) : (
