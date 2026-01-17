@@ -353,31 +353,28 @@ export function ScorePanel({
   // Mutation hook for saving results
   const { saveResult, isSaving } = useSaveResult();
 
-  // If we found an existing result, populate the analysis state with a reveal animation
+  // If we found an existing result, populate the analysis state immediately
   useEffect(() => {
     if (existingResult && !analysisResult) {
-      // Small delay to allow the loading state to fade out first
-      const timer = setTimeout(() => {
-        setAnalysisResult({
-          summary: existingResult.analysisSummary || "",
-          isPerfect: existingResult.analysisIsPerfect,
-          feedback: existingResult.analysisFeedback || [],
-          grade: existingResult.grade, // Include the grade from the saved result
-        });
-        // Trigger the reveal animation after content is set
-        setTimeout(() => setAnalysisRevealed(true), 50);
-      }, 300);
-      return () => clearTimeout(timer);
+      setAnalysisResult({
+        summary: existingResult.analysisSummary || "",
+        isPerfect: existingResult.analysisIsPerfect,
+        feedback: existingResult.analysisFeedback || [],
+        grade: existingResult.grade,
+      });
+      // Set revealed immediately for existing results (no animation needed)
+      setAnalysisRevealed(true);
     }
   }, [existingResult, analysisResult]);
 
-  // Also trigger reveal when analysis completes from a fresh analyze action
+  // Trigger reveal animation when analysis completes from a fresh analyze action
   useEffect(() => {
-    if (analysisResult && !analysisRevealed) {
+    // Only animate reveal for fresh analysis (not existing results)
+    if (analysisResult && !analysisRevealed && !existingResult) {
       const timer = setTimeout(() => setAnalysisRevealed(true), 50);
       return () => clearTimeout(timer);
     }
-  }, [analysisResult, analysisRevealed]);
+  }, [analysisResult, analysisRevealed, existingResult]);
 
   // Trigger entrance animation on mount
   useEffect(() => {
@@ -417,6 +414,9 @@ export function ScorePanel({
   
   // Whether we have a grade (either from fresh analysis or existing result)
   const hasGrade = !!(analysisResult?.grade || existingResult?.grade);
+  
+  // Whether we're still initializing (loading OR waiting for analysisResult to sync from existingResult)
+  const isInitializing = isCheckingExisting || (existingResult && !analysisResult);
 
   /**
    * Saves the stress test result to the database using the mutation hook.
@@ -586,8 +586,8 @@ export function ScorePanel({
 
   return (
     <div className={`flex h-full flex-col gap-4 overflow-y-auto pt-10 transition-all duration-500 ease-out ${isVisible ? "opacity-100" : "opacity-0"}`}>
-      {/* View Toggle - shown only when we have a grade (analysis complete) */}
-      {hasGrade && (
+      {/* View Toggle - shown only when we have a grade (analysis complete) and not initializing */}
+      {hasGrade && !isInitializing && (
         <ToggleGroup
           options={[
             { value: "analysis", label: "Analysis", icon: SparklesIcon },
@@ -599,12 +599,43 @@ export function ScorePanel({
       )}
 
       {/* Card display logic:
+          - While initializing (checking for existing result or syncing state): show loading skeleton
           - Before analysis (no grade): show TimeOnlyCard
           - After analysis with grade:
             - If showing analysis mode: slim score card
             - If showing score view: full score card
+          - During analysis: show analyzing placeholder
       */}
-      {!hasGrade && !analyzing ? (
+      {isInitializing ? (
+        // Loading skeleton while checking for existing result
+        <div 
+          className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas-default border border-gh-border p-[2px] transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95"}`}
+          style={{ transitionDelay: "100ms" }}
+        >
+          <div className="rounded-[14px] bg-gh-canvas-default p-5">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <BuggrIcon className="h-4 w-4 text-gh-success" />
+                <span className="text-xs font-semibold tracking-wide text-white uppercase">Buggr</span>
+              </div>
+              <div className="h-4 w-24 bg-gh-canvas-subtle rounded animate-pulse" />
+            </div>
+            <div className="text-center mb-6">
+              <div className="inline-flex h-24 w-24 items-center justify-center rounded-2xl bg-gh-canvas-subtle mb-3 animate-pulse" />
+              <div className="h-6 w-32 bg-gh-canvas-subtle rounded mx-auto mb-2 animate-pulse" />
+              <div className="h-4 w-48 bg-gh-canvas-subtle rounded mx-auto animate-pulse" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="rounded-lg bg-gh-canvas-subtle p-3 text-center">
+                  <div className="h-8 w-12 bg-gh-canvas-default rounded mx-auto mb-1 animate-pulse" />
+                  <div className="h-3 w-8 bg-gh-canvas-default rounded mx-auto animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : !hasGrade && !analyzing ? (
         <TimeOnlyCard {...timeOnlyCardProps} />
       ) : hasGrade && showingAnalysisMode ? (
         <SlimScoreCard {...scoreCardProps} />
@@ -646,22 +677,6 @@ export function ScorePanel({
             <SparklesIcon className="h-4 w-4" />
             Analyze Code
           </Button>
-        </div>
-      )}
-
-      {/* Loading state while checking for existing result */}
-      {isCheckingExisting && !analysisResult && (
-        <div 
-          className={`transition-all duration-300 ease-out ${isVisible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"}`}
-          style={{ transitionDelay: "900ms" }}
-        >
-          <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-6">
-            <div className="relative">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-gh-accent/30 border-t-gh-accent" />
-              <SparklesIcon className="absolute inset-0 m-auto h-4 w-4 text-gh-accent animate-pulse" />
-            </div>
-            <span className="text-sm text-gh-text-muted">Loading previous analysis...</span>
-          </div>
         </div>
       )}
 
