@@ -475,6 +475,15 @@ export async function createStressMetadata(
 }
 
 /**
+ * Creates or updates an empty reasoning text file alongside buggr metadata.
+ * This gives users a place to jot down debugging notes or disagreements with injected bugs.
+ *
+ * @param accessToken - GitHub OAuth access token
+ * @param metadata - Bug session metadata (used for repo/branch context)
+ * @returns Commit result
+ */
+
+/**
  * Fetches buggr metadata from a branch.
  * Returns null if the metadata file doesn't exist (branch wasn't created by Buggr).
  * 

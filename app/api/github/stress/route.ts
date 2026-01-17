@@ -11,6 +11,47 @@ import { sendBugReportEmail, APP_URL } from "@/lib/email";
 // Maximum file size in lines to process (keeps token usage reasonable)
 const MAX_FILE_LINES_SINGLE = 5000; // If only 1 file, allow up to 5000 lines
 const MAX_FILE_LINES_MULTIPLE = 2000; // If multiple files, limit to 2000 lines per file
+const GITHUB_API_BASE = "https://api.github.com";
+const REASONING_FILE_PATH = "reasoning.txt";
+
+/**
+ * Creates or updates an empty reasoning text file alongside buggr metadata.
+ * Stored at the project root (same level as .buggr.json) for user annotations.
+ *
+ * @param accessToken - GitHub OAuth access token
+ * @param metadata - Bug session metadata (for repo/branch context)
+ * @returns Commit result
+ */
+async function createReasoningFile(
+  accessToken: string,
+  metadata: StressMetadata
+): Promise<{ commit: { sha: string } }> {
+  const { owner, repo, branch } = metadata;
+
+  const response = await fetch(
+    `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${REASONING_FILE_PATH}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: "🧠 Add reasoning notes file",
+        content: Buffer.from("").toString("base64"),
+        branch,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `Failed to create reasoning file: ${response.statusText}`);
+  }
+
+  return response.json();
+}
 
 /**
  * POST /api/github/stress
@@ -418,6 +459,14 @@ export async function POST(request: NextRequest) {
       } catch (metadataError) {
         // Log but don't fail the request if metadata creation fails
         console.error("Failed to create stress metadata:", metadataError);
+      }
+
+      // Create an empty reasoning notes file alongside metadata for user annotations
+      try {
+        await createReasoningFile(session.accessToken, metadata);
+      } catch (reasoningError) {
+        // Non-blocking: if reasoning file fails, continue
+        console.error("Failed to create reasoning file:", reasoningError);
       }
 
       // Send bug report email to the user (don't block response)

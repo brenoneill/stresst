@@ -814,9 +814,6 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
           )}
         </div>
 
-        {/* Coins CTA */}
-        <CoinsUpsell contactEmail={process.env.NEXT_PUBLIC_CONTACT_EMAIL} />
-
         {/* Score Panel View */}
         {showScorePanel && startCommit && completeCommit ? (
           <ScorePanel startCommit={startCommit} completeCommit={completeCommit} branchName={selectedBranch || ""} onClose={() => setShowScorePanel(false)} stressMetadata={stressMetadata} />
