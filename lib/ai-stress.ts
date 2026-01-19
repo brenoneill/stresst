@@ -200,6 +200,50 @@ const STRESS_CONFIGS: Record<StressLevel, StressConfig> = {
   },
 };
 
+/** Determines how the AI should approach code modification */
+type ModificationMode = "modify_only" | "may_add_sparingly";
+
+/**
+ * Randomly selects whether the AI should only modify existing code or may add new code.
+ * Weighted 70% towards modify-only to encourage breaking existing code over adding features.
+ * 
+ * @returns The modification mode for this stress session
+ */
+function selectModificationMode(): ModificationMode {
+  return Math.random() < 0.7 ? "modify_only" : "may_add_sparingly";
+}
+
+/**
+ * Generates the appropriate prompt instruction based on the modification mode.
+ * 
+ * @param mode - The selected modification mode
+ * @returns Prompt instruction string for the AI
+ */
+function getModificationInstruction(mode: ModificationMode): string {
+  if (mode === "modify_only") {
+    return `APPROACH - MODIFY EXISTING CODE ONLY:
+You must introduce bugs ONLY by modifying code that already exists in the file:
+- Find existing arrays, loops, conditions, calculations, or data handling and break them
+- Corrupt existing variable assignments, function parameters, or return values
+- Modify existing logic (flip conditions, change operators, alter indices)
+- Break existing string manipulations, date handling, or formatting
+
+DO NOT add any new functions, variables, or code blocks. Work only with what's already there.`;
+  }
+  
+  return `APPROACH - PRIMARILY MODIFY, MAY ADD SPARINGLY:
+Your PRIMARY approach should be to introduce bugs by MODIFYING code that already exists in the file:
+- Find existing arrays, loops, conditions, calculations, or data handling and break them
+- Corrupt existing variable assignments, function parameters, or return values
+- Modify existing logic (flip conditions, change operators, alter indices)
+- Break existing string manipulations, date handling, or formatting
+
+If needed, you may add a small amount of code to enable a bug, but keep additions minimal:
+1. A few lines at most, not entire functions
+2. Must be relevant to the file's purpose
+3. Should integrate naturally with existing patterns`;
+}
+
 
 /**
  * Detects the framework/library used in the code based on content and filename.
@@ -453,6 +497,11 @@ export async function introduceAIStress(
   const selectedBugs = selectRandomBugTypes(bugCount, content, filename, stressLevel);
   const bugInstructions = formatBugInstructions(selectedBugs);
   
+  // RANDOMIZE: Determine if AI should only modify or may add code (70% modify only)
+  const modificationMode = selectModificationMode();
+  const modificationInstruction = getModificationInstruction(modificationMode);
+  console.log(`Modification mode: ${modificationMode}`);
+  
   // Detect framework for prompt enhancement
   const detectedFrameworks = detectFramework(content, filename);
   const frameworkInstruction = detectedFrameworks.length > 0
@@ -499,14 +548,8 @@ CRITICAL RULES:
 3. Do NOT add comments that reveal bug locations (no "// bug here" or hints)
 4. Do NOT make syntax errors that IDEs would catch immediately
 5. Bugs must be DETERMINISTIC - same behavior every time with same input
-6. You MAY add helper functions to hide bugs (especially for medium/high stress)
-7. The code must still compile/parse correctly
-8. NEVER say "Unable to implement" - if the code doesn't have the required structure for a bug (e.g., no array with IDs for an "all items show same ID" bug), you MUST ADD the necessary code to enable the bug. For example:
-   - If asked to corrupt array IDs but no array exists: ADD an array with IDs to the code, then introduce the bug
-   - If asked to break a calculation but no calculation exists: ADD a relevant calculation, then break it
-   - If asked to corrupt string display but no strings are displayed: ADD string display code, then corrupt it
-   - The added code should be RELEVANT to the file's purpose and look like a natural addition a developer might make
-   - The bug should then be introduced in this newly added code
+6. The code must still compile/parse correctly
+7. Follow the APPROACH instructions below carefully regarding modifying vs adding code
 
 MANDATORY BUG REQUIREMENTS:
 - Bugs MUST be CLEARLY VISIBLE breaking changes - users must immediately see something is wrong
@@ -525,20 +568,7 @@ Imagine the code was written by a sloppy developer who:
 - Gets confused by their own code
 - Makes typos and doesn't proofread
 
-IMPORTANT - IF CODE STRUCTURE IS MISSING:
-If the code doesn't have the necessary structure to implement a specific bug type, you MUST add that structure yourself. NEVER respond with "Unable to implement" or skip a bug.
-
-Examples of what to do:
-- Bug requires array with IDs, but no array exists: ADD an array of items with IDs (e.g., add a data array, an inventory list, a user list), then introduce the bug in that array
-- Bug requires string display, but no strings are shown: ADD code that displays strings (e.g., labels, names, messages), then corrupt those strings
-- Bug requires calculation, but no math exists: ADD a relevant calculation (e.g., totals, counts, prices), then break that calculation
-- Bug requires form input, but no forms exist: ADD a form or input handler, then introduce the bug there
-
-The added code should:
-1. Be relevant to what the file appears to do (if it's combat code, add combat-related arrays/calculations)
-2. Look like a natural addition a developer would make
-3. Integrate with existing code patterns and styles
-4. Then contain the bug you were asked to introduce
+${modificationInstruction}
 
 Here is the code to modify:
 
