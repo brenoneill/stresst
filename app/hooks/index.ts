@@ -42,3 +42,5 @@ export { useDashboardState } from "./useDashboardState";
 // Legacy hook (deprecated - use useDashboardState instead)
 export { useDashboardUrl } from "./useDashboardUrl";
 
+// RepoBranchSelector hook
+export { useRepoBranchSelector, type UseRepoBranchSelectorReturn } from "./useRepoBranchSelector";
