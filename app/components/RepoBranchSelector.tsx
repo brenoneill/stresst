@@ -142,15 +142,17 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
   /**
    * Initialize state from URL parameters.
    * Runs when URL repo changes (including initial hydration from nuqs).
+   * Also handles navigation to a different repo via notification links.
    */
   useEffect(() => {
-    // Only restore if we have a URL repo and haven't selected one yet
-    if (!urlRepo || selectedRepo) return;
+    // Skip if no URL repo
+    if (!urlRepo) return;
+    
+    // Skip if already on the correct repo
+    if (selectedRepo?.full_name === urlRepo) return;
     
     // Set flag to prevent URL sync effects from overwriting URL params during restoration
-    if (urlBranch) {
-      isRestoringFromUrl.current = true;
-    }
+    isRestoringFromUrl.current = true;
 
     // Find and select the repo from URL
     const repo = repos.find((r) => r.full_name === urlRepo);
@@ -161,9 +163,12 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
       isRestoringFromUrl.current = false;
     }
 
-    // If no branch to restore, clear flag immediately
+    // If no branch to restore, clear flag after a short delay
+    // (branch restoration effect will handle clearing it if there is a branch)
     if (!urlBranch) {
-      isRestoringFromUrl.current = false;
+      setTimeout(() => {
+        isRestoringFromUrl.current = false;
+      }, 100);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlRepo, repos]);
@@ -183,11 +188,15 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
 
   /**
    * Restore branch selection when URL branch changes or branches load.
+   * This handles both initial load from URL and navigation via notification links.
    */
   useEffect(() => {
     if (urlBranch && branches.length > 0 && selectedBranch !== urlBranch) {
       const branchExists = branches.some((b) => b.name === urlBranch);
       if (branchExists) {
+        // Set restoration flag BEFORE calling handleBranchSelect to prevent
+        // the sync effect from pushing the old branch back to the URL
+        isRestoringFromUrl.current = true;
         handleBranchSelect(urlBranch);
         // Clear restoration flag after branch is restored
         // Use timeout to ensure state updates have propagated
