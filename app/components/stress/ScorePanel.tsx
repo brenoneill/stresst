@@ -790,14 +790,10 @@ export function ScorePanel({
   // Whether we have task data to display (stressMetadata with symptoms/changes)
   const hasTaskData = !!(stressMetadata?.symptoms?.length || stressMetadata?.changes?.length);
 
-  // Ensure activeView is valid and prioritize Analysis when available
+  // Ensure activeView is valid - only auto-switch when current view becomes invalid
   useEffect(() => {
-    // When grade becomes available, switch to analysis (the preferred default)
-    if (hasGrade && activeView !== "analysis" && activeView !== "score") {
-      setActiveView("analysis");
-    }
     // If on analysis view but no grade, switch to task (if available) or score
-    else if (activeView === "analysis" && !hasGrade) {
+    if (activeView === "analysis" && !hasGrade) {
       setActiveView(hasTaskData ? "task" : "score");
     }
     // If on task view but no task data, switch to analysis (if available) or score
