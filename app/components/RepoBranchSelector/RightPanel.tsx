@@ -36,6 +36,7 @@ interface RightPanelProps {
   selectedCommit: GitHubCommit | null;
   commitDetails: GitHubCommitDetails | null;
   loadingDetails: boolean;
+  loadingCommits: boolean;
 
   // Score panel
   showScorePanel: boolean;
@@ -87,6 +88,7 @@ export function RightPanel({
   selectedCommit,
   commitDetails,
   loadingDetails,
+  loadingCommits,
   showScorePanel,
   setShowScorePanel,
   startCommit,
@@ -348,6 +350,14 @@ export function RightPanel({
               </>
             );
           })()}
+        </div>
+      ) : loadingCommits ? (
+        /* Loading state during branch transitions */
+        <div className="flex h-full flex-1 items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-gh-border border-t-gh-success" />
+            <p className="text-sm text-gh-text-muted">Loading commits...</p>
+          </div>
         </div>
       ) : (
         <EmptyState icon={EmptyStateIcons.commits} title="No commit selected" description="Select a commit from the list to view changed files" />

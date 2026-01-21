@@ -163,6 +163,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
         selectedCommit={selectedCommit}
         commitDetails={commitDetails}
         loadingDetails={loadingDetails}
+        loadingCommits={loadingCommits}
         showScorePanel={showScorePanel}
         setShowScorePanel={setShowScorePanel}
         startCommit={startCommit}
