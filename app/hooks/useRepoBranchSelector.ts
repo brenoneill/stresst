@@ -39,7 +39,7 @@ export interface UseRepoBranchSelectorReturn {
   // Repos
   repos: GitHubRepo[];
   selectedRepo: GitHubRepo | null;
-  handleRepoSelect: (repo: GitHubRepo) => Promise<void>;
+  handleRepoSelect: (repo: GitHubRepo) => void;
   handleForkSuccess: (forkedRepo: GitHubRepo) => void;
 
   // Branches
@@ -150,9 +150,8 @@ export function useRepoBranchSelector({
     clearAll: clearUrlParams,
   } = useDashboardState();
 
-  // Core state - branch and commit selection derived from URL
+  // Core state - repo, branch, and commit selection all derived from URL
   const [repos, setRepos] = useState<GitHubRepo[]>(initialRepos);
-  const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
   const [commitDetails, setCommitDetails] = useState<GitHubCommitDetails | null>(null);
   const [branches, setBranches] = useState<GitHubBranch[]>([]);
   const [commits, setCommits] = useState<GitHubCommit[]>([]);
@@ -160,6 +159,12 @@ export function useRepoBranchSelector({
   const [loadingCommits, setLoadingCommits] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Derive selectedRepo from URL and repos list
+  const selectedRepo = useMemo(() => {
+    if (!urlRepo) return null;
+    return repos.find((r) => r.full_name === urlRepo) ?? null;
+  }, [urlRepo, repos]);
   
   // Derive selectedBranch from URL
   const selectedBranch = urlBranch;
@@ -192,10 +197,10 @@ export function useRepoBranchSelector({
   const [stressMetadata, setStressMetadata] = useState<StressMetadata | null>(null);
   const [loadingMetadata, setLoadingMetadata] = useState(false);
 
-  // Refs for tracking initialization
+  // Refs for tracking initialization and fetch deduplication
   const hasInitialized = useRef(false);
-  const isRestoringFromUrl = useRef(false);
   const lastAutoShowBranch = useRef<string | null>(null);
+  const lastFetchedRepo = useRef<string | null>(null);
   const lastFetchedBranch = useRef<string | null>(null);
   const lastFetchedCommit = useRef<string | null>(null);
 
@@ -247,38 +252,14 @@ export function useRepoBranchSelector({
   // ============================================
 
   /**
-   * Fetches branches for the selected repository.
+   * Navigates to a repository by updating the URL.
+   * The URL change triggers effects that fetch branches.
    */
-  const handleRepoSelect = useCallback(async (repo: GitHubRepo) => {
-    setSelectedRepo(repo);
-    setCommitDetails(null);
-    setCommits([]);
-    setLoadingBranches(true);
-    setError(null);
-    setShowScorePanel(false);
-    lastFetchedBranch.current = null; // Reset so branch effect can run
-    lastFetchedCommit.current = null; // Reset so commit effect can run
-
-    // Clear branch and commit from URL when selecting new repo
-    setUrlBranch(null);
-    setUrlCommit(null);
-
-    try {
-      const response = await fetch(`/api/github/branches?owner=${repo.owner.login}&repo=${repo.name}`);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch branches");
-      }
-
-      const data = await response.json();
-      setBranches(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-      setBranches([]);
-    } finally {
-      setLoadingBranches(false);
-    }
-  }, [setUrlBranch, setUrlCommit]);
+  const handleRepoSelect = useCallback((repo: GitHubRepo) => {
+    // Navigate via URL - the effect will handle fetching branches
+    const url = `/dashboard?repo=${repo.full_name}`;
+    router.push(url);
+  }, [router]);
 
   /**
    * Navigates to a commit by updating the URL.
@@ -607,13 +588,14 @@ export function useRepoBranchSelector({
    * Clears all selections and resets state.
    */
   const handleClearSelection = useCallback(() => {
-    setSelectedRepo(null);
+    // Clear derived data (repo/branch/commit will clear via URL)
     setCommitDetails(null);
     setBranches([]);
     setCommits([]);
     setBranchSuccess(null);
     setShowCreateBranch(false);
     setShowScorePanel(false);
+    lastFetchedRepo.current = null;
     lastFetchedBranch.current = null;
     lastFetchedCommit.current = null;
     clearUrlParams();
@@ -637,27 +619,54 @@ export function useRepoBranchSelector({
   }, [canCheckScore, selectedBranch]);
 
   /**
-   * Initialize state from URL parameters.
+   * Fetch branches when URL repo changes.
+   * selectedRepo is derived from URL, so we just need to fetch branches.
    */
   useEffect(() => {
-    if (!urlRepo) return;
-    if (selectedRepo?.full_name === urlRepo) return;
-
-    isRestoringFromUrl.current = true;
-
-    const repo = repos.find((r) => r.full_name === urlRepo);
-    if (repo) {
-      handleRepoSelect(repo);
-    } else {
-      isRestoringFromUrl.current = false;
+    if (!selectedRepo) {
+      // Clear branches when no repo is selected
+      setBranches([]);
+      setCommits([]);
+      setCommitDetails(null);
+      lastFetchedRepo.current = null;
+      lastFetchedBranch.current = null;
+      lastFetchedCommit.current = null;
+      return;
     }
-
-    if (!urlBranch) {
-      setTimeout(() => {
-        isRestoringFromUrl.current = false;
-      }, 100);
-    }
-  }, [urlRepo, repos, selectedRepo?.full_name, urlBranch, handleRepoSelect]);
+    
+    // Skip if we already fetched branches for this repo
+    if (lastFetchedRepo.current === selectedRepo.full_name) return;
+    lastFetchedRepo.current = selectedRepo.full_name;
+    
+    // Reset branch and commit tracking for new repo
+    lastFetchedBranch.current = null;
+    lastFetchedCommit.current = null;
+    
+    // Clear previous state
+    setBranches([]);
+    setCommits([]);
+    setCommitDetails(null);
+    setLoadingBranches(true);
+    setError(null);
+    setShowScorePanel(false);
+    
+    // Fetch branches for this repo
+    fetch(`/api/github/branches?owner=${selectedRepo.owner.login}&repo=${selectedRepo.name}`)
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to fetch branches");
+        return response.json();
+      })
+      .then((data) => {
+        setBranches(data);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Something went wrong");
+        setBranches([]);
+      })
+      .finally(() => {
+        setLoadingBranches(false);
+      });
+  }, [selectedRepo]);
 
   /**
    * Show score panel from URL on initial load.
@@ -757,22 +766,8 @@ export function useRepoBranchSelector({
       });
   }, [selectedCommit, selectedRepo, commitDetails?.sha]);
 
-  /**
-   * Sync component state to URL when selections change.
-   * Only syncs when values actually change to prevent loops.
-   */
-  useEffect(() => {
-    if (isRestoringFromUrl.current) return;
-    const newRepo = selectedRepo?.full_name || null;
-    // Only update if actually different from current URL
-    if (newRepo !== urlRepo) {
-      setUrlRepo(newRepo);
-    }
-  }, [selectedRepo?.full_name, urlRepo, setUrlRepo]);
-
-  // NOTE: Branch selection is derived from URL (urlBranch) - no sync effect needed.
-  // NOTE: Commit URL sync is handled directly in handleCommitSelect.
-  // to avoid timing issues with effects. No automatic sync effect needed here.
+  // NOTE: Repo, branch, and commit selection are all derived from URL - no sync effects needed.
+  // All navigation is handled via router.push() in the handlers.
 
   useEffect(() => {
     // Only update if actually different from current URL
