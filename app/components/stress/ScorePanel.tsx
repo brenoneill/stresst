@@ -641,6 +641,13 @@ export function ScorePanel({
     }
   }, [analysisResult, analysisRevealed, existingResult]);
 
+  // Auto-switch to Analysis tab when analysis completes (or existing result loads)
+  useEffect(() => {
+    if (analysisResult?.grade) {
+      setActiveView("analysis");
+    }
+  }, [analysisResult?.grade]);
+
   // Trigger entrance animation on mount
   useEffect(() => {
     // Small delay to ensure the component is mounted before animating
