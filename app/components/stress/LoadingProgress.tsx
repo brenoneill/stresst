@@ -10,32 +10,16 @@ export interface LoadingStep {
 }
 
 interface LoadingProgressProps {
-  /**
-   * Array of steps to display.
-   */
+
   steps: LoadingStep[];
-  /**
-   * Current step number (1-indexed). 0 means not started.
-   */
+
   currentStep: number;
-  /**
-   * Optional title text.
-   */
+
   title?: string;
-  /**
-   * Optional subtitle text.
-   */
+
   subtitle?: string;
 }
 
-/**
- * A multi-step loading progress indicator with animated steps.
- *
- * @param steps - Array of step objects with labels
- * @param currentStep - The current step number (1-indexed)
- * @param title - Optional title override
- * @param subtitle - Optional subtitle text
- */
 export function LoadingProgress({ steps, currentStep, title, subtitle }: LoadingProgressProps) {
   const currentLabel = steps[currentStep - 1]?.label || "Preparing...";
 
