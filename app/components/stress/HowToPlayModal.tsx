@@ -1,17 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Modal } from "@/app/components/Modal";
 import { Button } from "@/app/components/inputs/Button";
 import { Card } from "@/app/components/Card";
 import {
   CheckIcon,
+  CloseIcon,
   TerminalIcon,
   SparklesIcon,
   TrophyIcon,
+  ArrowRightIcon,
 } from "@/app/components/icons";
 
-const LOCALSTORAGE_KEY = "buggr-how-to-play-dismissed";
+export const HOW_TO_PLAY_DISMISSED_KEY = "buggr-how-to-play-dismissed";
+
+export function isHowToPlayDismissed(): boolean {
+  if (typeof window === "undefined") return true;
+  return localStorage.getItem(HOW_TO_PLAY_DISMISSED_KEY) === "true";
+}
 
 interface HowToPlayModalProps {
   isOpen: boolean;
@@ -48,17 +55,6 @@ function Step({ number, icon, title, description, code }: StepProps) {
   );
 }
 
-export function useHowToPlayDismissed() {
-  const [isDismissed, setIsDismissed] = useState(true); // Default true to prevent flash
-
-  useEffect(() => {
-    const stored = localStorage.getItem(LOCALSTORAGE_KEY);
-    setIsDismissed(stored === "true");
-  }, []);
-
-  return isDismissed;
-}
-
 export function HowToPlayModal({
   isOpen,
   onClose,
@@ -67,7 +63,7 @@ export function HowToPlayModal({
 
   const handleClose = () => {
     if (dontShowAgain) {
-      localStorage.setItem(LOCALSTORAGE_KEY, "true");
+      localStorage.setItem(HOW_TO_PLAY_DISMISSED_KEY, "true");
     }
     onClose();
   };
@@ -153,5 +149,61 @@ export function HowToPlayModal({
         </Button>
       </div>
     </Modal>
+  );
+}
+
+interface HowToPlayCardProps {
+  branchName: string;
+  onDismiss: () => void;
+  onShowBranch: () => void;
+}
+
+function CompactStep({ number, text }: { number: number; text: string }) {
+  return (
+    <div className="flex items-start gap-2">
+      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gh-accent/20 text-xs font-bold text-gh-accent">
+        {number}
+      </div>
+      <p className="text-xs text-gh-text-muted pt-0.5">{text}</p>
+    </div>
+  );
+}
+
+export function HowToPlayCard({ branchName, onDismiss, onShowBranch }: HowToPlayCardProps) {
+  return (
+    <Card variant="success">
+      {/* Header */}
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-gh-success-fg">
+          <CheckIcon className="h-5 w-5" />
+          <span className="text-sm font-medium">Branch created!</span>
+        </div>
+        <Button variant="ghost" size="icon" onClick={onDismiss}>
+          <CloseIcon className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Branch name */}
+      <p className="mb-3 text-xs text-gh-text-muted">
+        <code className="rounded bg-gh-border px-1.5 py-0.5 font-mono text-gh-success-fg">
+          {branchName}
+        </code>
+      </p>
+
+      {/* Compact Steps */}
+      <div className="mb-3 space-y-2 rounded-lg bg-gh-canvas-subtle p-3">
+        <p className="text-xs font-medium text-white mb-2">How to play:</p>
+        <CompactStep number={1} text='Make an empty commit (git commit --allow-empty -m "start")' />
+        <CompactStep number={2} text="Find and fix the bugs" />
+        <CompactStep number={3} text='Commit with "done" or "end" when finished' />
+        <CompactStep number={4} text='Push and click "Check Score"' />
+      </div>
+
+      {/* Action */}
+      <Button variant="primary" fullWidth onClick={onShowBranch}>
+        <ArrowRightIcon className="h-4 w-4" />
+        Show Buggered Branch
+      </Button>
+    </Card>
   );
 }
