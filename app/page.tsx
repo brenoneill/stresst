@@ -333,6 +333,82 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* How to Play Section */}
+        <section className="mb-16">
+          <div className="mb-8 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-gh-border bg-gh-canvas-subtle">
+              <TerminalIcon className="h-5 w-5 text-gh-success" />
+            </div>
+            <h3 className="text-2xl font-bold text-white">How to Play</h3>
+          </div>
+          <div className="rounded-xl border border-gh-border bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas p-8">
+            <p className="mb-6 text-lg leading-relaxed text-gh-text-muted">
+              Once you&apos;ve created a buggered branch, here&apos;s how to debug it and get your score:
+            </p>
+            
+            <div className="space-y-4">
+              {/* Step 1 */}
+              <div className="flex gap-4">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gh-accent/20 font-bold text-gh-accent">
+                  1
+                </div>
+                <div className="flex-1">
+                  <h4 className="mb-1 font-semibold text-white">Start the Timer</h4>
+                  <p className="mb-2 text-sm text-gh-text-muted">
+                    Clone the buggered branch and create an empty commit with &quot;start&quot; in the message:
+                  </p>
+                  <div className="rounded-lg bg-gh-canvas p-3">
+                    <code className="text-sm text-gh-accent">git commit --allow-empty -m &quot;start&quot;</code>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div className="flex gap-4">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gh-accent/20 font-bold text-gh-accent">
+                  2
+                </div>
+                <div className="flex-1">
+                  <h4 className="mb-1 font-semibold text-white">Find & Fix the Bugs</h4>
+                  <p className="text-sm text-gh-text-muted">
+                    Review the code, identify the issues, and make your fixes. 
+                    Remember: no AI code generation tools!
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex gap-4">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gh-accent/20 font-bold text-gh-accent">
+                  3
+                </div>
+                <div className="flex-1">
+                  <h4 className="mb-1 font-semibold text-white">Stop the Timer</h4>
+                  <p className="mb-2 text-sm text-gh-text-muted">
+                    Commit your fixes with &quot;done&quot; or &quot;end&quot; in the message:
+                  </p>
+                  <div className="rounded-lg bg-gh-canvas p-3">
+                    <code className="text-sm text-gh-accent">git commit -m &quot;done - fixed all bugs&quot;</code>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 4 */}
+              <div className="flex gap-4">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gh-accent/20 font-bold text-gh-accent">
+                  4
+                </div>
+                <div className="flex-1">
+                  <h4 className="mb-1 font-semibold text-white">Get Your Score</h4>
+                  <p className="text-sm text-gh-text-muted">
+                    Push your changes, return to Buggr, select your branch, and click &quot;Check Score&quot; to see your grade.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Scoring Section */}
         <section className="mb-16">
           <div className="mb-8 flex items-center gap-3">
