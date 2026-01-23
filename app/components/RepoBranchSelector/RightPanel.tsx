@@ -26,6 +26,7 @@ import { LOADING_STEPS } from "@/app/components/stress/loading-steps";
 interface RightPanelProps {
   userName?: string;
   userCoins?: number;
+  hasInvites?: boolean;
   logoutForm?: React.ReactNode;
 
   selectedRepo: GitHubRepo | null;
@@ -72,6 +73,7 @@ interface RightPanelProps {
 export function RightPanel({
   userName,
   userCoins,
+  hasInvites,
   logoutForm,
   selectedRepo,
   selectedBranch,
@@ -133,10 +135,21 @@ export function RightPanel({
         {userName && (
           <div className="flex items-center gap-4">
             {userCoins !== undefined && (
-              <div className="flex items-center gap-1.5 rounded-lg border border-gh-border bg-gh-canvas-subtle px-3 py-1.5">
+              <Link
+                href="/profile"
+                className="flex items-center gap-1.5 rounded-lg border border-gh-border bg-gh-canvas-subtle px-3 py-1.5 transition-colors hover:border-gh-accent/50 hover:bg-gh-accent/10"
+              >
                 <CoinIcon className="h-4 w-4 text-gh-accent" />
                 <span className="text-sm font-semibold text-gh-accent">{userCoins}</span>
-              </div>
+              </Link>
+            )}
+            {!hasInvites && (
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-xs font-medium text-green-400 transition-colors hover:border-green-500/50 hover:bg-green-500/20"
+              >
+                Send 1 invite and earn 30 coins now
+              </Link>
             )}
             <Link
               href="/profile"

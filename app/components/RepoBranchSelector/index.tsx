@@ -136,6 +136,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
       <RightPanel
         userName={userName}
         userCoins={user?.coins}
+        hasInvites={invitations.length > 0}
         logoutForm={logoutForm}
         selectedRepo={selectedRepo}
         selectedBranch={selectedBranch}
